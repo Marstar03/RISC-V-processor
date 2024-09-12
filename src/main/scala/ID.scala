@@ -21,6 +21,8 @@ class InstructionDecode extends MultiIOModule {
       /**
         * TODO: Your code here.
         */
+      val InstructionSignal = Input(new Instruction)
+      val PCIn = Input(UInt())
     }
   )
 
