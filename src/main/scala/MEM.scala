@@ -18,6 +18,17 @@ class MemoryFetch() extends MultiIOModule {
 
   val io = IO(
     new Bundle {
+      val PCPlusOffsetIn = Input(UInt())
+      val ControlSignalsIn = Input(new ControlSignals)
+      val ALUIn = Input(UInt(32.W))
+      val RegB = Input(UInt(32.W))
+      val WBRegAddressIn = Input(UInt(5.W))
+
+      val PCPlusOffsetOut = Output(UInt())
+      val ControlSignalsOut = Output(new ControlSignals)
+      val ALUOut = Output(UInt(32.W))
+      val MemData = Output(UInt(32.W))
+      val WBRegAddressOut = Output(UInt(5.W))
     })
 
 
@@ -35,7 +46,14 @@ class MemoryFetch() extends MultiIOModule {
   /**
     * Your code here.
     */
-  DMEM.io.dataIn      := 0.U
-  DMEM.io.dataAddress := 0.U
-  DMEM.io.writeEnable := false.B
+  DMEM.io.dataIn      := io.RegB
+  DMEM.io.dataAddress := io.ALUIn
+  DMEM.io.writeEnable := false.B // Må endres til riktig kontrollsignal senere, men trengs ikke for addi
+
+  io.PCPlusOffsetOut := io.PCPlusOffsetIn
+  io.ControlSignalsOut := io.ControlSignalsIn
+  io.ALUOut := io.ALUIn
+  io.MemData := DMEM.io.dataOut
+  io.WBRegAddressOut := io.WBRegAddressIn
+
 }

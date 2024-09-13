@@ -21,13 +21,16 @@ class InstructionDecode extends MultiIOModule {
       /**
         * TODO: Your code here.
         */
-      val InstructionSignal = Input(new Instruction)
       val PCIn = Input(UInt()) // burde kanskje sette til 32 bits?
+      val InstructionSignal = Input(new Instruction)
+      val WBRegAddressIn = Input(UInt(5.W))
+      val RegDataIn = Input(UInt(32.W))
+      val ControlSignalsIn = Input(new ControlSignals) 
 
       val PCOut = Output(UInt())
+      val ControlSignals = Output(new ControlSignals)
       val RegA = Output(UInt(32.W))
       val RegB = Output(UInt(32.W))
-      val ControlSignals = Output(new ControlSignals)
       val Immediate = Output(UInt(32.W))
       val WBRegAddress = Output(UInt(5.W)) // Adressen til registeret vi vil skrive tilbake til (bit 11 til 7)
     }
@@ -50,9 +53,9 @@ class InstructionDecode extends MultiIOModule {
     */
   registers.io.readAddress1 := io.InstructionSignal.registerRs1
   registers.io.readAddress2 := io.InstructionSignal.registerRs2
-  registers.io.writeEnable  := false.B // kobles til signal fra WB stage
-  registers.io.writeAddress := 0.U // kobles til signal fra WB stage
-  registers.io.writeData    := 0.U // kobles til signal fra WB stage
+  registers.io.writeEnable  := io.ControlSignalsIn // OBS! Vil ikke funke pga for mange signaler // kobles til signal fra WB stage
+  registers.io.writeAddress := io.WBRegAddressIn // kobles til signal fra WB stage
+  registers.io.writeData    := io.RegDataIn // kobles til signal fra WB stage
 
   decoder.instruction := io.InstructionSignal
   io.ControlSignals := decoder.controlSignals

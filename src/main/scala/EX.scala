@@ -41,6 +41,10 @@ class Execute extends MultiIOModule {
   Adder.aluOp := ADD
   io.PCPlusOffset := Adder.aluResult
 
+  io.ControlSignalsOut := io.ControlSignalsIn
+  io.RegBOut := io.RegB
+  io.WBRegAddressOut := io.WBRegAddressIn
+
 
 
 

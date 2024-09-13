@@ -23,12 +23,16 @@ class InstructionFetch extends MultiIOModule {
     */
   val io = IO(
     new Bundle {
+      val PCPlusOffsetIn = Input(UInt())
+      val ControlSignalsIn = Input(new ControlSignals)
+
       val PC = Output(UInt())
       val InstructionSignal = Output(new Instruction)
     })
 
   val IMEM = Module(new IMEM)
   val PC   = RegInit(UInt(32.W), 0.U)
+  val MUX = Module(new MyMux).io // mux for å velge mellom PC og PCPlusOffsetIn
 
 
   /**
@@ -43,8 +47,12 @@ class InstructionFetch extends MultiIOModule {
     * 
     * You should expand on or rewrite the code below.
     */
-  io.PC := PC
-  IMEM.io.instructionAddress := PC
+  MUX.in1 := io.PCPlusOffsetIn
+  MUX.in0 := io.PC
+  MUX.sel := 1.U // foreløpig lar vi muxen velge PC hele tiden. Må finne hvilket signal
+
+  io.PC := MUX.out
+  IMEM.io.instructionAddress := MUX.out
 
   PC := PC + 4.U
 
