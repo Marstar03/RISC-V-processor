@@ -47,7 +47,7 @@ class IDBarrier() extends Module {
   PCBarrierReg := io.PCIn
   io.PCOut := PCBarrierReg
 
-  val ControlSignalsBarrierReg = RegInit(0.U(32.W))
+  val ControlSignalsBarrierReg = RegInit(0.U.asTypeOf(new ControlSignals))
   ControlSignalsBarrierReg := io.ControlSignalsIn
   io.ControlSignalsOut := ControlSignalsBarrierReg
 
@@ -90,7 +90,7 @@ class EXBarrier() extends Module {
   PCPlusOffsetBarrierReg := io.PCPlusOffsetIn
   io.PCPlusOffsetOut := PCPlusOffsetBarrierReg
 
-  val ControlSignalsBarrierReg = RegInit(0.U(32.W))
+  val ControlSignalsBarrierReg = RegInit(0.U.asTypeOf(new ControlSignals))
   ControlSignalsBarrierReg := io.ControlSignalsIn
   io.ControlSignalsOut := ControlSignalsBarrierReg
 
@@ -123,7 +123,7 @@ class MEMBarrier() extends Module {
     }
   )
 
-  val ControlSignalsBarrierReg = RegInit(0.U(32.W))
+  val ControlSignalsBarrierReg = RegInit(0.U.asTypeOf(new ControlSignals))
   ControlSignalsBarrierReg := io.ControlSignalsIn
   io.ControlSignalsOut := ControlSignalsBarrierReg
 

@@ -1,6 +1,8 @@
 package FiveStage
 
 import chisel3._
+import chisel3.util.MuxLookup
+import ALUOps._
 
 
 class ALU() extends Module {

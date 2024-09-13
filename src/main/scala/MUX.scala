@@ -1,3 +1,7 @@
+package FiveStage
+
+import chisel3._
+
 class MyMux extends Module {
     val io = IO(new Bundle {
       val in0 = Input(UInt(32.W))

@@ -1,5 +1,6 @@
 package FiveStage
 import chisel3._
+import chisel3.util._
 import chisel3.util.{ BitPat, MuxCase }
 import chisel3.experimental.MultiIOModule
 
@@ -53,7 +54,7 @@ class InstructionDecode extends MultiIOModule {
     */
   registers.io.readAddress1 := io.InstructionSignal.registerRs1
   registers.io.readAddress2 := io.InstructionSignal.registerRs2
-  registers.io.writeEnable  := io.ControlSignalsIn // OBS! Vil ikke funke pga for mange signaler // kobles til signal fra WB stage
+  registers.io.writeEnable  := io.ControlSignalsIn.regWrite // OBS! Vil ikke funke pga for mange signaler // kobles til signal fra WB stage
   registers.io.writeAddress := io.WBRegAddressIn // kobles til signal fra WB stage
   registers.io.writeData    := io.RegDataIn // kobles til signal fra WB stage
 

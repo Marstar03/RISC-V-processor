@@ -2,6 +2,7 @@ package FiveStage
 import chisel3._
 import chisel3.util.{ BitPat, MuxCase }
 import chisel3.experimental.MultiIOModule
+import ALUOps._
 
 
 class Execute extends MultiIOModule {
