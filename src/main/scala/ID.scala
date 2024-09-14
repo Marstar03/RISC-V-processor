@@ -30,6 +30,8 @@ class InstructionDecode extends MultiIOModule {
 
       val PCOut = Output(UInt())
       val ControlSignals = Output(new ControlSignals)
+      val op2Select = Output(UInt(1.W))
+      val ALUop = Output(UInt(4.W))
       val RegA = Output(UInt(32.W))
       val RegB = Output(UInt(32.W))
       val Immediate = Output(UInt(32.W))
@@ -60,6 +62,8 @@ class InstructionDecode extends MultiIOModule {
 
   decoder.instruction := io.InstructionSignal
   io.ControlSignals := decoder.controlSignals
+  io.op2Select := decoder.op2Select
+  io.ALUop := decoder.ALUop
   io.RegA := registers.io.readData1
   io.RegB := registers.io.readData2
   io.WBRegAddress := io.InstructionSignal.registerRd

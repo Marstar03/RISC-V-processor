@@ -29,6 +29,8 @@ class IDBarrier() extends Module {
     new Bundle {
       val PCIn = Input(UInt())
       val ControlSignalsIn = Input(new ControlSignals)
+      val op2SelectIn = Input(UInt(1.W))
+      val ALUopIn = Input(UInt(4.W))
       val RegAIn = Input(UInt(32.W))
       val RegBIn = Input(UInt(32.W))
       val ImmediateIn = Input(UInt(32.W))
@@ -36,6 +38,8 @@ class IDBarrier() extends Module {
 
       val PCOut = Output(UInt())
       val ControlSignalsOut = Output(new ControlSignals)
+      val op2SelectOut = Output(UInt(1.W))
+      val ALUopOut = Output(UInt(4.W))
       val RegAOut = Output(UInt(32.W))
       val RegBOut = Output(UInt(32.W))
       val ImmediateOut = Output(UInt(32.W))
@@ -50,6 +54,14 @@ class IDBarrier() extends Module {
   val ControlSignalsBarrierReg = RegInit(0.U.asTypeOf(new ControlSignals))
   ControlSignalsBarrierReg := io.ControlSignalsIn
   io.ControlSignalsOut := ControlSignalsBarrierReg
+
+  val op2SelectBarrierReg = RegInit(0.U(1.W))
+  op2SelectBarrierReg := io.op2SelectIn
+  io.op2SelectOut := op2SelectBarrierReg
+
+  val ALUopBarrierReg = RegInit(0.U(4.W))
+  ALUopBarrierReg := io.ALUopIn
+  io.ALUopOut := ALUopBarrierReg
 
   val RegABarrierReg = RegInit(0.U(32.W))
   RegABarrierReg := io.RegAIn

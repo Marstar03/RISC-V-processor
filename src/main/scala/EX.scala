@@ -11,6 +11,8 @@ class Execute extends MultiIOModule {
     new Bundle {
       val PCIn = Input(UInt()) // burde kanskje sette til 32 bits?
       val ControlSignalsIn = Input(new ControlSignals)
+      val op2Select = Input(UInt(1.W))
+      val ALUop = Input(UInt(4.W))
       val RegA = Input(UInt(32.W))
       val RegB = Input(UInt(32.W))
       val Immediate = Input(UInt(32.W))
@@ -28,13 +30,14 @@ class Execute extends MultiIOModule {
   val ALU = Module(new ALU).io
   val Adder = Module(new ALU).io
 
-  MUX.in1 := io.RegB
-  MUX.in0 := io.Immediate
-  MUX.sel := 0.U // Foreløpig lar vi muxen velge immediate hele tiden. Må finne ut av hvilket signal som skal styre den
+  MUX.in0 := io.RegB
+  MUX.in1 := io.Immediate
+  MUX.sel := io.op2Select
 
   ALU.op1 := io.RegA
   ALU.op2 := MUX.out
-  ALU.aluOp := ADD // Setter ALUen til å foreløpig gjøre en add
+  //ALU.aluOp := ADD // Setter ALUen til å foreløpig gjøre en add
+  ALU.aluOp := io.ALUop
   io.ALUOut := ALU.aluResult
 
   Adder.op1 := io.PCIn

@@ -20,9 +20,9 @@ class WriteBack() extends MultiIOModule {
 
   val MUX = Module(new MyMux).io // mux for å velge mellom ALUIn og MemDataIn til register WB data
 
-  MUX.in1 := io.MemDataIn
   MUX.in0 := io.ALUIn
-  MUX.sel := 0.U // foreløpig lar vi muxen velge ALUIn hele tiden. Må finne hvilket signal
+  MUX.in1 := io.MemDataIn
+  MUX.sel := io.ControlSignalsIn.memRead
   
   io.ControlSignalsOut := io.ControlSignalsIn
   io.MuxDataOut := MUX.out

@@ -66,6 +66,8 @@ class CPU extends MultiIOModule {
   // IDBarrier signals
   IDBarrier.io.PCIn := ID.io.PCOut
   IDBarrier.io.ControlSignalsIn := ID.io.ControlSignals
+  IDBarrier.io.op2SelectIn := ID.io.op2Select
+  IDBarrier.io.ALUopIn := ID.io.ALUop
   IDBarrier.io.RegAIn := ID.io.RegA
   IDBarrier.io.RegBIn := ID.io.RegB
   IDBarrier.io.ImmediateIn := ID.io.Immediate
@@ -73,6 +75,8 @@ class CPU extends MultiIOModule {
 
   EX.io.PCIn := IDBarrier.io.PCOut
   EX.io.ControlSignalsIn := IDBarrier.io.ControlSignalsOut
+  EX.io.op2Select := IDBarrier.io.op2SelectOut
+  EX.io.ALUop := IDBarrier.io.ALUopOut
   EX.io.RegA := IDBarrier.io.RegAOut
   EX.io.RegB := IDBarrier.io.RegBOut
   EX.io.Immediate := IDBarrier.io.ImmediateOut
