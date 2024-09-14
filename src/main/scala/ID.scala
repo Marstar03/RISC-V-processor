@@ -68,4 +68,7 @@ class InstructionDecode extends MultiIOModule {
   //io.Immediate := io.InstructionSignal.immediateIType
   // Må sign extende fra 12 til 32 bits
   io.Immediate := Cat(Fill(20, io.InstructionSignal.immediateIType(11)), io.InstructionSignal.immediateIType)
+  //io.Immediate := io.InstructionSignal.immediateIType.asSInt()
+  // printf(p"Current non Extended imm: ${io.InstructionSignal.immediateIType}\n")
+  // printf(p"Current Extended imm: ${io.Immediate}\n")
 }

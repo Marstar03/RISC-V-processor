@@ -30,7 +30,7 @@ class Execute extends MultiIOModule {
 
   MUX.in1 := io.RegB
   MUX.in0 := io.Immediate
-  MUX.sel := 1.U // Foreløpig lar vi muxen velge immediate hele tiden. Må finne ut av hvilket signal som skal styre den
+  MUX.sel := 0.U // Foreløpig lar vi muxen velge immediate hele tiden. Må finne ut av hvilket signal som skal styre den
 
   ALU.op1 := io.RegA
   ALU.op2 := MUX.out

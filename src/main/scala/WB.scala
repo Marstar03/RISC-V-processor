@@ -22,7 +22,7 @@ class WriteBack() extends MultiIOModule {
 
   MUX.in1 := io.MemDataIn
   MUX.in0 := io.ALUIn
-  MUX.sel := 1.U // foreløpig lar vi muxen velge ALUIn hele tiden. Må finne hvilket signal
+  MUX.sel := 0.U // foreløpig lar vi muxen velge ALUIn hele tiden. Må finne hvilket signal
   
   io.ControlSignalsOut := io.ControlSignalsIn
   io.MuxDataOut := MUX.out
