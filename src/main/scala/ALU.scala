@@ -20,7 +20,15 @@ class ALU() extends Module {
 
   val ALUopMap = Array(
     ADD    -> (io.op1 + io.op2),
-    SUB    -> (io.op1 - io.op2)
+    SUB    -> (io.op1 - io.op2),
+    SLT    -> (io.op1.asSInt < io.op2.asSInt).asUInt,
+    SLTU   -> (io.op1 < io.op2),
+    SLL    -> (io.op1 << io.op2(4,0)),
+    SRA    -> (io.op1.asSInt >> io.op2(4,0)).asUInt,
+    SRL    -> (io.op1 >> io.op2(4,0)),
+    AND    -> (io.op1 & io.op2),
+    OR     -> (io.op1 | io.op2),
+    XOR    -> (io.op1 ^ io.op2)
     )
 
     io.aluResult := MuxLookup(io.aluOp, 0.U(32.W), ALUopMap)
