@@ -48,7 +48,7 @@ class MemoryFetch() extends MultiIOModule {
     */
   DMEM.io.dataIn      := io.RegB
   DMEM.io.dataAddress := io.ALUIn
-  DMEM.io.writeEnable := false.B // Må endres til riktig kontrollsignal senere, men trengs ikke for addi
+  DMEM.io.writeEnable := io.ControlSignalsIn.memWrite
 
   io.PCPlusOffsetOut := io.PCPlusOffsetIn
   io.ControlSignalsOut := io.ControlSignalsIn
