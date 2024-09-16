@@ -69,10 +69,10 @@ class InstructionDecode extends MultiIOModule {
   io.WBRegAddress := io.InstructionSignal.registerRd
   io.PCOut := io.PCIn
 
-  //io.Immediate := io.InstructionSignal.immediateIType
-  // Må sign extende fra 12 til 32 bits
-  io.Immediate := Cat(Fill(20, io.InstructionSignal.immediateIType(11)), io.InstructionSignal.immediateIType)
-  //io.Immediate := io.InstructionSignal.immediateIType.asSInt()
-  // printf(p"Current non Extended imm: ${io.InstructionSignal.immediateIType}\n")
-  // printf(p"Current Extended imm: ${io.Immediate}\n")
+  // Utvider 12 bit integer til 32 bits ved å duplisere bit 11, altså sign-bit 20 ganger, og legge til de opprinnelige bit-ene
+  io.Immediate := MuxLookup(decoder.immType, 0.U, Seq(
+    ImmFormat.ITYPE -> Cat(Fill(20, io.InstructionSignal.immediateIType(11)), io.InstructionSignal.immediateIType),
+    ImmFormat.STYPE -> Cat(Fill(20, io.InstructionSignal.immediateSType(11)), io.InstructionSignal.immediateSType)
+  ))
+
 }
