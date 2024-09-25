@@ -36,7 +36,6 @@ class Execute extends MultiIOModule {
 
   ALU.op1 := io.RegA
   ALU.op2 := MUX.out
-  //ALU.aluOp := ADD // Setter ALUen til å foreløpig gjøre en add
   ALU.aluOp := io.ALUop
   io.ALUOut := ALU.aluResult
 

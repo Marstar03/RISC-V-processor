@@ -49,7 +49,8 @@ class InstructionFetch extends MultiIOModule {
     */
   MUX.in1 := io.PCPlusOffsetIn
   MUX.in0 := PC
-  MUX.sel := 0.U // foreløpig lar vi muxen velge PC hele tiden. Må finne hvilket signal
+  //MUX.sel := 0.U // foreløpig lar vi muxen velge PC hele tiden. Må finne hvilket signal
+  MUX.sel := io.ControlSignalsIn.jump
 
   io.PC := MUX.out
   IMEM.io.instructionAddress := MUX.out

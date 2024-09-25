@@ -71,6 +71,9 @@ class Decoder() extends Module {
     ORI   -> List(Y,        N,       N,        N,       N,    branchType.DC, rs1,       imm,       ITYPE,        ALUOps.OR),
     XORI  -> List(Y,        N,       N,        N,       N,    branchType.DC, rs1,       imm,       ITYPE,        ALUOps.XOR),
 
+    LI  -> List(Y,        N,       N,        N,       N,    branchType.DC, rs1,       imm,       ITYPE,        ALUOps.ADD),
+    //BEQ  -> List(N,        N,       N,        Y,       N,    branchType.BEQ, rs1,       rs2,       STYPE,        ALUOps.XOR),
+
     /**
       TODO: Fill in the blanks
       */
