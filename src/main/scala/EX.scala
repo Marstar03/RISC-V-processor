@@ -25,6 +25,7 @@ class Execute extends MultiIOModule {
       val ALUOut = Output(UInt(32.W))
       val RegBOut = Output(UInt(32.W))
       val WBRegAddressOut = Output(UInt(5.W))
+      val shouldBranch = Output(Bool())
     }
   )
 
@@ -45,6 +46,7 @@ class Execute extends MultiIOModule {
   ALU.op2 := op2MUX.out
   ALU.aluOp := io.ALUop
   io.ALUOut := ALU.aluResult
+  //io.ALUZero := (ALU.aluResult === 0.U)
 
   Adder.op1 := io.PCIn
   Adder.op2 := io.Immediate
@@ -54,6 +56,14 @@ class Execute extends MultiIOModule {
   io.ControlSignalsOut := io.ControlSignalsIn
   io.RegBOut := io.RegB
   io.WBRegAddressOut := io.WBRegAddressIn
+
+  // lager et signal som er true hvis vi skal bruke PC + imm til neste instruksjon
+
+  //io.shouldBranch := io.ControlSignalsIn.jump | (io.branchType == branchType.beq & (ALU.aluResult == 0.U)) | (io.branchType == branchType.beq & (ALU.aluResult != 0.U))
+
+  io.shouldBranch := io.ControlSignalsIn.jump || 
+                  ((io.branchType === branchType.beq) && (ALU.aluResult === 0.U)) || 
+                  ((io.branchType === branchType.neq) && (ALU.aluResult =/= 0.U))
 
 
 

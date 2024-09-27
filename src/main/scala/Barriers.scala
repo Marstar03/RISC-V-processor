@@ -101,12 +101,14 @@ class EXBarrier() extends Module {
       val ALUIn = Input(UInt(32.W))
       val RegBIn = Input(UInt(32.W))
       val WBRegAddressIn = Input(UInt(5.W))
+      val shouldBranchIn = Input(Bool())
 
       val PCPlusOffsetOut = Output(UInt())
       val ControlSignalsOut = Output(new ControlSignals)
       val ALUOut = Output(UInt(32.W))
       val RegBOut = Output(UInt(32.W))
       val WBRegAddressOut = Output(UInt(5.W))
+      val shouldBranchOut = Output(Bool())
     }
   )
 
@@ -129,6 +131,10 @@ class EXBarrier() extends Module {
   val WBRegAddressBarrierReg = RegInit(0.U(32.W))
   WBRegAddressBarrierReg := io.WBRegAddressIn
   io.WBRegAddressOut := WBRegAddressBarrierReg
+
+  val shouldBranchBarrierReg = RegInit(0.U.asTypeOf(new Bool))
+  shouldBranchBarrierReg := io.shouldBranchIn
+  io.shouldBranchOut := shouldBranchBarrierReg
 }
 
 class MEMBarrier() extends Module {
