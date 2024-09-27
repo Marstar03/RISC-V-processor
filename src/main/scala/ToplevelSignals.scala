@@ -120,6 +120,7 @@ object ALUOps {
   val COPY_A = 10.U(4.W)
   val COPY_B = 11.U(4.W)
   val LUI    = 12.U(4.W)
+  val JAL    = 12.U(4.W)
 
   val DC     = 15.U(4.W)
 }

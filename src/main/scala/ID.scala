@@ -30,6 +30,8 @@ class InstructionDecode extends MultiIOModule {
 
       val PCOut = Output(UInt())
       val ControlSignals = Output(new ControlSignals)
+      val branchType = Output(UInt(3.W))
+      val op1Select = Output(UInt(1.W))
       val op2Select = Output(UInt(1.W))
       val ALUop = Output(UInt(4.W))
       val RegA = Output(UInt(32.W))
@@ -62,6 +64,8 @@ class InstructionDecode extends MultiIOModule {
 
   decoder.instruction := io.InstructionSignal
   io.ControlSignals := decoder.controlSignals
+  io.branchType := decoder.branchType
+  io.op1Select := decoder.op1Select
   io.op2Select := decoder.op2Select
   io.ALUop := decoder.ALUop
   io.RegA := registers.io.readData1
@@ -76,7 +80,8 @@ class InstructionDecode extends MultiIOModule {
     ImmFormat.ITYPE -> Cat(Fill(20, io.InstructionSignal.immediateIType(11)), io.InstructionSignal.immediateIType),
     ImmFormat.STYPE -> Cat(Fill(20, io.InstructionSignal.immediateSType(11)), io.InstructionSignal.immediateSType),
     //ImmFormat.UTYPE -> Cat(Fill(20, 0.U), io.InstructionSignal.immediateUType) // må fikse denne for at LUI skal funke
-    ImmFormat.UTYPE -> io.InstructionSignal.immediateUType.asUInt
+    ImmFormat.UTYPE -> io.InstructionSignal.immediateUType.asUInt,
+    ImmFormat.JTYPE -> io.InstructionSignal.immediateJType.asUInt
   ))
 
 }

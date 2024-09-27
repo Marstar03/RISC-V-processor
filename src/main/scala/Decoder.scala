@@ -70,8 +70,10 @@ class Decoder() extends Module {
     ANDI  -> List(Y,        N,       N,        N,       N,    branchType.DC, rs1,       imm,       ITYPE,        ALUOps.AND),
     ORI   -> List(Y,        N,       N,        N,       N,    branchType.DC, rs1,       imm,       ITYPE,        ALUOps.OR),
     XORI  -> List(Y,        N,       N,        N,       N,    branchType.DC, rs1,       imm,       ITYPE,        ALUOps.XOR),
-    LUI   -> List(Y,        N,       N,        N,       N,    branchType.DC, rs1,       imm,       UTYPE,        ALUOps.LUI)
 
+    // new in milestone 2:
+    LUI   -> List(Y,        N,       N,        N,       N,    branchType.DC, rs1,       imm,       UTYPE,        ALUOps.LUI),
+    JAL  -> List(Y,        N,       N,        N,       Y,    branchType.jump, PC,       imm,       JTYPE,        ALUOps.JAL),
     //BEQ  -> List(N,        N,       N,        Y,       N,    branchType.BEQ, rs1,       rs2,       STYPE,        ALUOps.XOR),
 
     /**
