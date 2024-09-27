@@ -69,10 +69,14 @@ class InstructionDecode extends MultiIOModule {
   io.WBRegAddress := io.InstructionSignal.registerRd
   io.PCOut := io.PCIn
 
+  
+
   // Utvider 12 bit integer til 32 bits ved å duplisere bit 11, altså sign-bit 20 ganger, og legge til de opprinnelige bit-ene
   io.Immediate := MuxLookup(decoder.immType, 0.U, Seq(
     ImmFormat.ITYPE -> Cat(Fill(20, io.InstructionSignal.immediateIType(11)), io.InstructionSignal.immediateIType),
-    ImmFormat.STYPE -> Cat(Fill(20, io.InstructionSignal.immediateSType(11)), io.InstructionSignal.immediateSType)
+    ImmFormat.STYPE -> Cat(Fill(20, io.InstructionSignal.immediateSType(11)), io.InstructionSignal.immediateSType),
+    //ImmFormat.UTYPE -> Cat(Fill(20, 0.U), io.InstructionSignal.immediateUType) // må fikse denne for at LUI skal funke
+    ImmFormat.UTYPE -> io.InstructionSignal.immediateUType.asUInt
   ))
 
 }
