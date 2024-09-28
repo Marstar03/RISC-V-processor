@@ -33,7 +33,8 @@ class InstructionFetch extends MultiIOModule {
 
   val IMEM = Module(new IMEM)
   val PC   = RegInit(UInt(32.W), 0.U)
-  val MUX = Module(new MyMux).io // mux for å velge mellom PC og PCPlusOffsetIn
+  val InstrMUX = Module(new MyMux).io // mux for å velge mellom PC og PCPlusOffsetIn
+  val pcMUX = Module(new MyMux).io 
 
 
   /**
@@ -48,14 +49,18 @@ class InstructionFetch extends MultiIOModule {
     * 
     * You should expand on or rewrite the code below.
     */
-  MUX.in0 := PC
-  MUX.in1 := io.PCPlusOffsetIn
-  MUX.sel := io.shouldBranchIn
+  InstrMUX.in0 := PC
+  InstrMUX.in1 := io.PCPlusOffsetIn
+  InstrMUX.sel := io.shouldBranchIn
 
-  io.PC := MUX.out
-  IMEM.io.instructionAddress := MUX.out
+  io.PC := InstrMUX.out
+  IMEM.io.instructionAddress := InstrMUX.out
 
-  PC := PC + 4.U
+  pcMUX.in0 := PC + 4.U
+  pcMUX.in1 := io.PCPlusOffsetIn + 4.U
+  pcMUX.sel := io.shouldBranchIn
+
+  PC := pcMUX.out
 
   val instruction = Wire(new Instruction)
   instruction := IMEM.io.instruction.asTypeOf(new Instruction)
