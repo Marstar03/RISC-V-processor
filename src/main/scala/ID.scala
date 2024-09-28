@@ -81,7 +81,8 @@ class InstructionDecode extends MultiIOModule {
     ImmFormat.STYPE -> Cat(Fill(20, io.InstructionSignal.immediateSType(11)), io.InstructionSignal.immediateSType),
     //ImmFormat.UTYPE -> Cat(Fill(20, 0.U), io.InstructionSignal.immediateUType) // må fikse denne for at LUI skal funke
     ImmFormat.UTYPE -> io.InstructionSignal.immediateUType.asUInt,
-    ImmFormat.JTYPE -> io.InstructionSignal.immediateJType.asUInt
+    ImmFormat.JTYPE -> io.InstructionSignal.immediateJType.asUInt,
+    ImmFormat.BTYPE -> io.InstructionSignal.immediateBType.asUInt
   ))
 
 }

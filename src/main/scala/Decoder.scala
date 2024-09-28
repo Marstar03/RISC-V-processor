@@ -73,9 +73,14 @@ class Decoder() extends Module {
 
     // new in milestone 2:
     LUI   -> List(Y,        N,       N,        N,       N,    branchType.DC, rs1,       imm,       UTYPE,        ALUOps.LUI),
-    JAL  -> List(Y,        N,       N,        N,       Y,    branchType.jump, PC,       imm,       JTYPE,        ALUOps.JAL),
-    BEQ  -> List(N,        N,       N,        Y,       N,    branchType.beq, rs1,       rs2,       STYPE,        ALUOps.XOR),
-    BNE  -> List(N,        N,       N,        Y,       N,    branchType.neq, rs1,       rs2,       STYPE,        ALUOps.XOR),
+    JAL  -> List(Y,        N,       N,        N,       Y,    branchType.jump, PC,       rs2,       JTYPE,        ALUOps.JAL),
+    JALR  -> List(Y,        N,       N,        N,       Y,    branchType.jumpReg, PC,       imm,       ITYPE,        ALUOps.JAL),
+    BEQ  -> List(N,        N,       N,        Y,       N,    branchType.beq, rs1,       rs2,       BTYPE,        ALUOps.XOR),
+    BNE  -> List(N,        N,       N,        Y,       N,    branchType.neq, rs1,       rs2,       BTYPE,        ALUOps.XOR),
+    BLT  -> List(N,        N,       N,        Y,       N,    branchType.lt, rs1,       rs2,       BTYPE,        ALUOps.SLT),
+    BGE  -> List(N,        N,       N,        Y,       N,    branchType.gte, rs1,       rs2,       BTYPE,        ALUOps.SLT),
+    BLTU  -> List(N,        N,       N,        Y,       N,    branchType.lt, rs1,       rs2,       BTYPE,        ALUOps.SLTU),
+    BGEU  -> List(N,        N,       N,        Y,       N,    branchType.gte, rs1,       rs2,       BTYPE,        ALUOps.SLTU),
 
     /**
       TODO: Fill in the blanks
