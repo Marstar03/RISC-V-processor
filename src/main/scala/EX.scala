@@ -17,7 +17,7 @@ class Execute extends MultiIOModule {
       val ALUop = Input(UInt(4.W))
       val RegA = Input(UInt(32.W))
       val RegB = Input(UInt(32.W))
-      val Immediate = Input(UInt(32.W))
+      val Immediate = Input(SInt(32.W))
       val WBRegAddressIn = Input(UInt(5.W)) // Adressen til registeret vi vil skrive tilbake til (bit 11 til 7)
 
       val PCPlusOffset = Output(UInt()) // PC pluss immediate verdi for branching
@@ -37,14 +37,14 @@ class Execute extends MultiIOModule {
   val pcplus4MUX = Module(new MyMux).io // mux for å velge mellom ALU output og PC + 4 til ALUOut
 
   val ALU = Module(new ALU).io
-  val Adder = Module(new ALU).io
+  val Adder = Module(new Adder).io
 
   op1MUX.in0 := io.RegA
   op1MUX.in1 := io.PCIn
   op1MUX.sel := io.op1Select
 
   op2MUX.in0 := io.RegB
-  op2MUX.in1 := io.Immediate
+  op2MUX.in1 := io.Immediate.asUInt
   op2MUX.sel := io.op2Select
 
   jumpMUX.in0 := io.PCIn
@@ -63,15 +63,15 @@ class Execute extends MultiIOModule {
   io.ALUOut := pcplus4MUX.out
   //io.ALUZero := (ALU.aluResult === 0.U)
 
-  Adder.op1 := jumpMUX.out
-  Adder.op2 := io.Immediate
-  Adder.aluOp := ADD
+  Adder.in0 := jumpMUX.out.asSInt
+  Adder.in1 := io.Immediate
+  //Adder.out := ADD
   //io.PCPlusOffset := Adder.aluResult
 
   when (jumpMUX.sel) {
-    io.PCPlusOffset := Adder.aluResult & "hfffffffe".U
+    io.PCPlusOffset := Adder.out.asUInt & "hfffffffe".U
   } .otherwise {
-    io.PCPlusOffset := Adder.aluResult
+    io.PCPlusOffset := Adder.out.asUInt
   }
 
   io.ControlSignalsOut := io.ControlSignalsIn

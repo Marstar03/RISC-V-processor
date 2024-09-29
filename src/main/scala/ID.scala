@@ -36,7 +36,7 @@ class InstructionDecode extends MultiIOModule {
       val ALUop = Output(UInt(4.W))
       val RegA = Output(UInt(32.W))
       val RegB = Output(UInt(32.W))
-      val Immediate = Output(UInt(32.W))
+      val Immediate = Output(SInt(32.W))
       val WBRegAddress = Output(UInt(5.W)) // Adressen til registeret vi vil skrive tilbake til (bit 11 til 7)
     }
   )
@@ -76,13 +76,13 @@ class InstructionDecode extends MultiIOModule {
   
 
   // Utvider 12 bit integer til 32 bits ved å duplisere bit 11, altså sign-bit 20 ganger, og legge til de opprinnelige bit-ene
-  io.Immediate := MuxLookup(decoder.immType, 0.U, Seq(
-    ImmFormat.ITYPE -> Cat(Fill(20, io.InstructionSignal.immediateIType(11)), io.InstructionSignal.immediateIType),
-    ImmFormat.STYPE -> Cat(Fill(20, io.InstructionSignal.immediateSType(11)), io.InstructionSignal.immediateSType),
+  io.Immediate := MuxLookup(decoder.immType, 0.S, Seq(
+    ImmFormat.ITYPE -> Cat(Fill(20, io.InstructionSignal.immediateIType(11)), io.InstructionSignal.immediateIType).asSInt,
+    ImmFormat.STYPE -> Cat(Fill(20, io.InstructionSignal.immediateSType(11)), io.InstructionSignal.immediateSType).asSInt,
     //ImmFormat.UTYPE -> Cat(Fill(20, 0.U), io.InstructionSignal.immediateUType) // må fikse denne for at LUI skal funke
-    ImmFormat.UTYPE -> io.InstructionSignal.immediateUType.asUInt,
-    ImmFormat.JTYPE -> io.InstructionSignal.immediateJType.asUInt,
-    ImmFormat.BTYPE -> io.InstructionSignal.immediateBType.asUInt
+    ImmFormat.UTYPE -> Cat(io.InstructionSignal.immediateUType(31, 12), 0.U(12.W)).asSInt, // U-Type upper 20 bits, lower 12 are zeroed
+    ImmFormat.JTYPE -> Cat(Fill(12, io.InstructionSignal.immediateJType(19)), io.InstructionSignal.immediateJType).asSInt,
+    ImmFormat.BTYPE -> Cat(Fill(20, io.InstructionSignal.immediateBType(11)), io.InstructionSignal.immediateBType).asSInt
   ))
 
 }

@@ -35,7 +35,7 @@ class IDBarrier() extends Module {
       val ALUopIn = Input(UInt(4.W))
       val RegAIn = Input(UInt(32.W))
       val RegBIn = Input(UInt(32.W))
-      val ImmediateIn = Input(UInt(32.W))
+      val ImmediateIn = Input(SInt(32.W))
       val WBRegAddressIn = Input(UInt(5.W))
 
       val PCOut = Output(UInt())
@@ -46,7 +46,7 @@ class IDBarrier() extends Module {
       val ALUopOut = Output(UInt(4.W))
       val RegAOut = Output(UInt(32.W))
       val RegBOut = Output(UInt(32.W))
-      val ImmediateOut = Output(UInt(32.W))
+      val ImmediateOut = Output(SInt(32.W))
       val WBRegAddressOut = Output(UInt(5.W))
     }
   )
@@ -83,7 +83,7 @@ class IDBarrier() extends Module {
   RegBBarrierReg := io.RegBIn
   io.RegBOut := RegBBarrierReg
 
-  val ImmediateBarrierReg = RegInit(0.U(32.W))
+  val ImmediateBarrierReg = RegInit(0.S(32.W))
   ImmediateBarrierReg := io.ImmediateIn
   io.ImmediateOut := ImmediateBarrierReg
   
