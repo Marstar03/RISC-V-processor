@@ -29,24 +29,25 @@ class Execute extends MultiIOModule {
     }
   )
 
-  val op1MUX = Module(new MyMux).io // mux for å velge mellom RegA og PC til ALU
-  val op2MUX = Module(new MyMux).io // mux for å velge mellom RegB og Immediate til ALU
-
-  val jumpMUX = Module(new MyMux).io // mux for å velge mellom PC og RegA til addering med immediate
-
-  val pcplus4MUX = Module(new MyMux).io // mux for å velge mellom ALU output og PC + 4 til ALUOut
+  val op1MUX = Module(new MyMux).io
+  val op2MUX = Module(new MyMux).io
+  val jumpMUX = Module(new MyMux).io
+  val pcplus4MUX = Module(new MyMux).io
 
   val ALU = Module(new ALU).io
   val Adder = Module(new Adder).io
 
+  // mux to choose between RegA and PC for the ALU op1
   op1MUX.in0 := io.RegA
   op1MUX.in1 := io.PCIn
   op1MUX.sel := io.op1Select
 
+  // mux to choose between RegB and the immediate for the ALU op 2
   op2MUX.in0 := io.RegB
   op2MUX.in1 := io.Immediate.asUInt
   op2MUX.sel := io.op2Select
 
+  // mux to choose between PC and RegA for adding with the immediate
   jumpMUX.in0 := io.PCIn
   jumpMUX.in1 := io.RegA
   jumpMUX.sel := (io.branchType === branchType.jumpReg)
@@ -55,34 +56,32 @@ class Execute extends MultiIOModule {
   ALU.op2 := op2MUX.out
   ALU.aluOp := io.ALUop
 
+  // mux for choosing between the alu output and pc + 4 for ALUOut output signal
   pcplus4MUX.in0 := ALU.aluResult
   pcplus4MUX.in1 := io.PCIn + 4.U
   pcplus4MUX.sel := io.ControlSignalsIn.jump
 
-
   io.ALUOut := pcplus4MUX.out
-  //io.ALUZero := (ALU.aluResult === 0.U)
 
+  // adder component which adds the output of jumpMUX (regA or pc) with the immediate
   Adder.in0 := jumpMUX.out.asSInt
   Adder.in1 := io.Immediate
-  //Adder.out := ADD
-  //io.PCPlusOffset := Adder.aluResult
 
   when (jumpMUX.sel) {
+    // sets the least significant bit to 0 if we add with regA value
     io.PCPlusOffset := Adder.out.asUInt & "hfffffffe".U
   } .otherwise {
+    // if just adding with pc we dont do anything
     io.PCPlusOffset := Adder.out.asUInt
   }
 
+  // signals that we keep to the mem stage
   io.ControlSignalsOut := io.ControlSignalsIn
   io.RegBOut := io.RegB
   io.WBRegAddressOut := io.WBRegAddressIn
 
-
-  // lager et signal som er true hvis vi skal bruke PC + imm til neste instruksjon
-
-  //io.shouldBranch := io.ControlSignalsIn.jump | (io.branchType == branchType.beq & (ALU.aluResult == 0.U)) | (io.branchType == branchType.beq & (ALU.aluResult != 0.U))
-
+  // shouldbranch is a signal that is true if any of the conditions for branch/jump is satisfied
+  // so it decides if we should use the pcplusoffset signal for addressing the next instruction
   io.shouldBranch := io.ControlSignalsIn.jump || 
                   ((io.branchType === branchType.beq) && (ALU.aluResult === 0.U)) || 
                   ((io.branchType === branchType.neq) && (ALU.aluResult =/= 0.U)) ||
@@ -90,8 +89,5 @@ class Execute extends MultiIOModule {
                   ((io.branchType === branchType.gte) && (ALU.aluResult === 0.U)) ||
                   ((io.branchType === branchType.ltu) && (ALU.aluResult === 1.U)) ||
                   ((io.branchType === branchType.gteu) && (ALU.aluResult === 0.U))
-
-
-
 
 }

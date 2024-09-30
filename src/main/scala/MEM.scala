@@ -48,6 +48,8 @@ class MemoryFetch() extends MultiIOModule {
   /**
     * Your code here.
     */
+  // many signals just passing through
+  // also writing/reading memory based on control signal
   DMEM.io.dataIn      := io.RegB
   DMEM.io.dataAddress := io.ALUIn
   DMEM.io.writeEnable := io.ControlSignalsIn.memWrite

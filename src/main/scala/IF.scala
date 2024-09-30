@@ -49,13 +49,17 @@ class InstructionFetch extends MultiIOModule {
     * 
     * You should expand on or rewrite the code below.
     */
+
+  // Mux that chooses the address between the pc and pc/reg-value + an offset
   InstrMUX.in0 := PC
   InstrMUX.in1 := io.PCPlusOffsetIn
   InstrMUX.sel := io.shouldBranchIn
 
+  // the pc output signal will then either remain pc or be updated to the pc + offset
   io.PC := InstrMUX.out
   IMEM.io.instructionAddress := InstrMUX.out
 
+  // created a mux for updating the actual pc for the next instruction. Choosing between pc + 4 and pc + offset + 4
   pcMUX.in0 := PC + 4.U
   pcMUX.in1 := io.PCPlusOffsetIn + 4.U
   pcMUX.sel := io.shouldBranchIn

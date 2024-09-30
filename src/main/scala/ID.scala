@@ -56,9 +56,11 @@ class InstructionDecode extends MultiIOModule {
   /**
     * TODO: Your code here.
     */
+
+  // using the instruction signal to address the two registers, as well as the write register
   registers.io.readAddress1 := io.InstructionSignal.registerRs1
   registers.io.readAddress2 := io.InstructionSignal.registerRs2
-  registers.io.writeEnable  := io.ControlSignalsIn.regWrite // OBS! Vil ikke funke pga for mange signaler // kobles til signal fra WB stage
+  registers.io.writeEnable  := io.ControlSignalsIn.regWrite
   registers.io.writeAddress := io.WBRegAddressIn // kobles til signal fra WB stage
   registers.io.writeData    := io.RegDataIn // kobles til signal fra WB stage
 
@@ -74,7 +76,7 @@ class InstructionDecode extends MultiIOModule {
   io.PCOut := io.PCIn
 
   
-
+  // finding the right type of immediate format to use, and sign extending it
   // Utvider 12 bit integer til 32 bits ved å duplisere bit 11, altså sign-bit 20 ganger, og legge til de opprinnelige bit-ene
   io.Immediate := MuxLookup(decoder.immType, 0.S, Seq(
     ImmFormat.ITYPE -> Cat(Fill(20, io.InstructionSignal.immediateIType(11)), io.InstructionSignal.immediateIType).asSInt,
