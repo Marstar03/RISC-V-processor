@@ -81,6 +81,7 @@ class Decoder() extends Module {
     BGE  -> List(N,        N,       N,        Y,       N,    branchType.gte, rs1,       rs2,       BTYPE,        ALUOps.SLT),
     BLTU  -> List(N,        N,       N,        Y,       N,    branchType.lt, rs1,       rs2,       BTYPE,        ALUOps.SLTU),
     BGEU  -> List(N,        N,       N,        Y,       N,    branchType.gte, rs1,       rs2,       BTYPE,        ALUOps.SLTU),
+    AUIPC  -> List(Y,        N,       N,        N,       N,    branchType.DC, rs1,       imm,       UTYPE,        ALUOps.AUIPC),
 
     /**
       TODO: Fill in the blanks
