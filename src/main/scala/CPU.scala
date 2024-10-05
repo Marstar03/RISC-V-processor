@@ -66,6 +66,8 @@ class CPU extends MultiIOModule {
   // IDBarrier signals
   IDBarrier.io.PCIn := ID.io.PCOut
   IDBarrier.io.ControlSignalsIn := ID.io.ControlSignals
+  IDBarrier.io.branchTypeIn := ID.io.branchType
+  IDBarrier.io.op1SelectIn := ID.io.op1Select
   IDBarrier.io.op2SelectIn := ID.io.op2Select
   IDBarrier.io.ALUopIn := ID.io.ALUop
   IDBarrier.io.RegAIn := ID.io.RegA
@@ -75,6 +77,8 @@ class CPU extends MultiIOModule {
 
   EX.io.PCIn := IDBarrier.io.PCOut
   EX.io.ControlSignalsIn := IDBarrier.io.ControlSignalsOut
+  EX.io.branchType := IDBarrier.io.branchTypeOut
+  EX.io.op1Select := IDBarrier.io.op1SelectOut
   EX.io.op2Select := IDBarrier.io.op2SelectOut
   EX.io.ALUop := IDBarrier.io.ALUopOut
   EX.io.RegA := IDBarrier.io.RegAOut
@@ -88,12 +92,14 @@ class CPU extends MultiIOModule {
   EXBarrier.io.ALUIn := EX.io.ALUOut
   EXBarrier.io.RegBIn := EX.io.RegBOut
   EXBarrier.io.WBRegAddressIn := EX.io.WBRegAddressOut
+  EXBarrier.io.shouldBranchIn := EX.io.shouldBranch
 
   MEM.io.PCPlusOffsetIn := EXBarrier.io.PCPlusOffsetOut
   MEM.io.ControlSignalsIn := EXBarrier.io.ControlSignalsOut
   MEM.io.ALUIn := EXBarrier.io.ALUOut
   MEM.io.RegB := EXBarrier.io.RegBOut
   MEM.io.WBRegAddressIn := EXBarrier.io.WBRegAddressOut
+  MEM.io.shouldBranchIn := EXBarrier.io.shouldBranchOut
 
   // MEMBarrier signals
   MEMBarrier.io.ControlSignalsIn := MEM.io.ControlSignalsOut
@@ -111,6 +117,7 @@ class CPU extends MultiIOModule {
   // MEM to IF
   IF.io.PCPlusOffsetIn := MEM.io.PCPlusOffsetOut
   IF.io.ControlSignalsIn := MEM.io.ControlSignalsOut
+  IF.io.shouldBranchIn := MEM.io.shouldBranchOut
 
   // WB to ID
   ID.io.WBRegAddressIn := WB.io.WBRegAddressOut

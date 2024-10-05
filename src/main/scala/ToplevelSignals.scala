@@ -69,6 +69,7 @@ object branchType {
   val ltu  = 5.asUInt(3.W)
   val jump = 6.asUInt(3.W)
   val DC   = 7.asUInt(3.W)
+  val jumpReg = 7.asUInt(3.W)
 }
 
 
@@ -119,6 +120,9 @@ object ALUOps {
   val SRA    = 9.U(4.W)
   val COPY_A = 10.U(4.W)
   val COPY_B = 11.U(4.W)
+  val LUI    = 12.U(4.W)
+  val JAL    = 12.U(4.W)
+  val AUIPC    = 13.U(4.W)
 
   val DC     = 15.U(4.W)
 }

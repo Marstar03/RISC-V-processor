@@ -29,20 +29,24 @@ class IDBarrier() extends Module {
     new Bundle {
       val PCIn = Input(UInt())
       val ControlSignalsIn = Input(new ControlSignals)
+      val branchTypeIn = Input(UInt(3.W))
+      val op1SelectIn = Input(UInt(1.W))
       val op2SelectIn = Input(UInt(1.W))
       val ALUopIn = Input(UInt(4.W))
       val RegAIn = Input(UInt(32.W))
       val RegBIn = Input(UInt(32.W))
-      val ImmediateIn = Input(UInt(32.W))
+      val ImmediateIn = Input(SInt(32.W))
       val WBRegAddressIn = Input(UInt(5.W))
 
       val PCOut = Output(UInt())
       val ControlSignalsOut = Output(new ControlSignals)
+      val branchTypeOut = Output(UInt(3.W))
+      val op1SelectOut = Output(UInt(1.W))
       val op2SelectOut = Output(UInt(1.W))
       val ALUopOut = Output(UInt(4.W))
       val RegAOut = Output(UInt(32.W))
       val RegBOut = Output(UInt(32.W))
-      val ImmediateOut = Output(UInt(32.W))
+      val ImmediateOut = Output(SInt(32.W))
       val WBRegAddressOut = Output(UInt(5.W))
     }
   )
@@ -54,6 +58,14 @@ class IDBarrier() extends Module {
   val ControlSignalsBarrierReg = RegInit(0.U.asTypeOf(new ControlSignals))
   ControlSignalsBarrierReg := io.ControlSignalsIn
   io.ControlSignalsOut := ControlSignalsBarrierReg
+
+  val branchTypeBarrierReg = RegInit(0.U(3.W))
+  branchTypeBarrierReg := io.branchTypeIn
+  io.branchTypeOut := branchTypeBarrierReg
+
+  val op1SelectBarrierReg = RegInit(0.U(1.W))
+  op1SelectBarrierReg := io.op1SelectIn
+  io.op1SelectOut := op1SelectBarrierReg
 
   val op2SelectBarrierReg = RegInit(0.U(1.W))
   op2SelectBarrierReg := io.op2SelectIn
@@ -71,7 +83,7 @@ class IDBarrier() extends Module {
   RegBBarrierReg := io.RegBIn
   io.RegBOut := RegBBarrierReg
 
-  val ImmediateBarrierReg = RegInit(0.U(32.W))
+  val ImmediateBarrierReg = RegInit(0.S(32.W))
   ImmediateBarrierReg := io.ImmediateIn
   io.ImmediateOut := ImmediateBarrierReg
   
@@ -89,12 +101,14 @@ class EXBarrier() extends Module {
       val ALUIn = Input(UInt(32.W))
       val RegBIn = Input(UInt(32.W))
       val WBRegAddressIn = Input(UInt(5.W))
+      val shouldBranchIn = Input(Bool())
 
       val PCPlusOffsetOut = Output(UInt())
       val ControlSignalsOut = Output(new ControlSignals)
       val ALUOut = Output(UInt(32.W))
       val RegBOut = Output(UInt(32.W))
       val WBRegAddressOut = Output(UInt(5.W))
+      val shouldBranchOut = Output(Bool())
     }
   )
 
@@ -117,6 +131,10 @@ class EXBarrier() extends Module {
   val WBRegAddressBarrierReg = RegInit(0.U(32.W))
   WBRegAddressBarrierReg := io.WBRegAddressIn
   io.WBRegAddressOut := WBRegAddressBarrierReg
+
+  val shouldBranchBarrierReg = RegInit(0.U.asTypeOf(new Bool))
+  shouldBranchBarrierReg := io.shouldBranchIn
+  io.shouldBranchOut := shouldBranchBarrierReg
 }
 
 class MEMBarrier() extends Module {

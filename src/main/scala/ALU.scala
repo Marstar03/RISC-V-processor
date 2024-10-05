@@ -28,7 +28,10 @@ class ALU() extends Module {
     SRL    -> (io.op1 >> io.op2(4,0)),
     AND    -> (io.op1 & io.op2),
     OR     -> (io.op1 | io.op2),
-    XOR    -> (io.op1 ^ io.op2)
+    XOR    -> (io.op1 ^ io.op2),
+    LUI    -> (io.op2),
+    JAL    -> (io.op2 + 4.U),
+    AUIPC  -> (io.op1 + (io.op2 << 12))
     )
 
     io.aluResult := MuxLookup(io.aluOp, 0.U(32.W), ALUopMap)

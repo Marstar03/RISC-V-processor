@@ -71,6 +71,18 @@ class Decoder() extends Module {
     ORI   -> List(Y,        N,       N,        N,       N,    branchType.DC, rs1,       imm,       ITYPE,        ALUOps.OR),
     XORI  -> List(Y,        N,       N,        N,       N,    branchType.DC, rs1,       imm,       ITYPE,        ALUOps.XOR),
 
+    // new in milestone 2:
+    LUI   -> List(Y,        N,       N,        N,       N,    branchType.DC, rs1,       imm,       UTYPE,        ALUOps.LUI),
+    JAL  -> List(Y,        N,       N,        N,       Y,    branchType.jump, PC,       rs2,       JTYPE,        ALUOps.JAL), // could have set aluops as DC since we use pc + 4 instead of alu during JAL and JALR
+    JALR  -> List(Y,        N,       N,        N,       Y,    branchType.jumpReg, PC,       imm,       ITYPE,        ALUOps.JAL),
+    BEQ  -> List(N,        N,       N,        Y,       N,    branchType.beq, rs1,       rs2,       BTYPE,        ALUOps.XOR),
+    BNE  -> List(N,        N,       N,        Y,       N,    branchType.neq, rs1,       rs2,       BTYPE,        ALUOps.XOR),
+    BLT  -> List(N,        N,       N,        Y,       N,    branchType.lt, rs1,       rs2,       BTYPE,        ALUOps.SLT),
+    BGE  -> List(N,        N,       N,        Y,       N,    branchType.gte, rs1,       rs2,       BTYPE,        ALUOps.SLT),
+    BLTU  -> List(N,        N,       N,        Y,       N,    branchType.lt, rs1,       rs2,       BTYPE,        ALUOps.SLTU),
+    BGEU  -> List(N,        N,       N,        Y,       N,    branchType.gte, rs1,       rs2,       BTYPE,        ALUOps.SLTU),
+    AUIPC  -> List(Y,        N,       N,        N,       N,    branchType.DC, rs1,       imm,       UTYPE,        ALUOps.AUIPC),
+
     /**
       TODO: Fill in the blanks
       */

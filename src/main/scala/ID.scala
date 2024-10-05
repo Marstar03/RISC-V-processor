@@ -30,11 +30,13 @@ class InstructionDecode extends MultiIOModule {
 
       val PCOut = Output(UInt())
       val ControlSignals = Output(new ControlSignals)
+      val branchType = Output(UInt(3.W))
+      val op1Select = Output(UInt(1.W))
       val op2Select = Output(UInt(1.W))
       val ALUop = Output(UInt(4.W))
       val RegA = Output(UInt(32.W))
       val RegB = Output(UInt(32.W))
-      val Immediate = Output(UInt(32.W))
+      val Immediate = Output(SInt(32.W))
       val WBRegAddress = Output(UInt(5.W)) // Adressen til registeret vi vil skrive tilbake til (bit 11 til 7)
     }
   )
@@ -54,14 +56,18 @@ class InstructionDecode extends MultiIOModule {
   /**
     * TODO: Your code here.
     */
+
+  // using the instruction signal to address the two registers, as well as the write register
   registers.io.readAddress1 := io.InstructionSignal.registerRs1
   registers.io.readAddress2 := io.InstructionSignal.registerRs2
-  registers.io.writeEnable  := io.ControlSignalsIn.regWrite // OBS! Vil ikke funke pga for mange signaler // kobles til signal fra WB stage
+  registers.io.writeEnable  := io.ControlSignalsIn.regWrite
   registers.io.writeAddress := io.WBRegAddressIn // kobles til signal fra WB stage
   registers.io.writeData    := io.RegDataIn // kobles til signal fra WB stage
 
   decoder.instruction := io.InstructionSignal
   io.ControlSignals := decoder.controlSignals
+  io.branchType := decoder.branchType
+  io.op1Select := decoder.op1Select
   io.op2Select := decoder.op2Select
   io.ALUop := decoder.ALUop
   io.RegA := registers.io.readData1
@@ -69,10 +75,16 @@ class InstructionDecode extends MultiIOModule {
   io.WBRegAddress := io.InstructionSignal.registerRd
   io.PCOut := io.PCIn
 
+  
+  // finding the right type of immediate format to use, and sign extending it
   // Utvider 12 bit integer til 32 bits ved å duplisere bit 11, altså sign-bit 20 ganger, og legge til de opprinnelige bit-ene
-  io.Immediate := MuxLookup(decoder.immType, 0.U, Seq(
-    ImmFormat.ITYPE -> Cat(Fill(20, io.InstructionSignal.immediateIType(11)), io.InstructionSignal.immediateIType),
-    ImmFormat.STYPE -> Cat(Fill(20, io.InstructionSignal.immediateSType(11)), io.InstructionSignal.immediateSType)
+  io.Immediate := MuxLookup(decoder.immType, 0.S, Seq(
+    ImmFormat.ITYPE -> Cat(Fill(20, io.InstructionSignal.immediateIType(11)), io.InstructionSignal.immediateIType).asSInt,
+    ImmFormat.STYPE -> Cat(Fill(20, io.InstructionSignal.immediateSType(11)), io.InstructionSignal.immediateSType).asSInt,
+    //ImmFormat.UTYPE -> Cat(Fill(20, 0.U), io.InstructionSignal.immediateUType) // må fikse denne for at LUI skal funke
+    ImmFormat.UTYPE -> Cat(io.InstructionSignal.immediateUType(31, 12), 0.U(12.W)).asSInt, // U-Type upper 20 bits, lower 12 are zeroed
+    ImmFormat.JTYPE -> Cat(Fill(12, io.InstructionSignal.immediateJType(19)), io.InstructionSignal.immediateJType).asSInt,
+    ImmFormat.BTYPE -> Cat(Fill(20, io.InstructionSignal.immediateBType(11)), io.InstructionSignal.immediateBType).asSInt
   ))
 
 }

@@ -25,6 +25,7 @@ class InstructionFetch extends MultiIOModule {
     new Bundle {
       val PCPlusOffsetIn = Input(UInt())
       val ControlSignalsIn = Input(new ControlSignals)
+      val shouldBranchIn = Input(Bool())
 
       val PC = Output(UInt())
       val InstructionSignal = Output(new Instruction)
@@ -32,7 +33,8 @@ class InstructionFetch extends MultiIOModule {
 
   val IMEM = Module(new IMEM)
   val PC   = RegInit(UInt(32.W), 0.U)
-  val MUX = Module(new MyMux).io // mux for å velge mellom PC og PCPlusOffsetIn
+  val InstrMUX = Module(new MyMux).io // mux for å velge mellom PC og PCPlusOffsetIn
+  val pcMUX = Module(new MyMux).io 
 
 
   /**
@@ -47,14 +49,22 @@ class InstructionFetch extends MultiIOModule {
     * 
     * You should expand on or rewrite the code below.
     */
-  MUX.in1 := io.PCPlusOffsetIn
-  MUX.in0 := PC
-  MUX.sel := 0.U // foreløpig lar vi muxen velge PC hele tiden. Må finne hvilket signal
 
-  io.PC := MUX.out
-  IMEM.io.instructionAddress := MUX.out
+  // Mux that chooses the address between the pc and pc/reg-value + an offset
+  InstrMUX.in0 := PC
+  InstrMUX.in1 := io.PCPlusOffsetIn
+  InstrMUX.sel := io.shouldBranchIn
 
-  PC := PC + 4.U
+  // the pc output signal will then either remain pc or be updated to the pc + offset
+  io.PC := InstrMUX.out
+  IMEM.io.instructionAddress := InstrMUX.out
+
+  // created a mux for updating the actual pc for the next instruction. Choosing between pc + 4 and pc + offset + 4
+  pcMUX.in0 := PC + 4.U
+  pcMUX.in1 := io.PCPlusOffsetIn + 4.U
+  pcMUX.sel := io.shouldBranchIn
+
+  PC := pcMUX.out
 
   val instruction = Wire(new Instruction)
   instruction := IMEM.io.instruction.asTypeOf(new Instruction)
