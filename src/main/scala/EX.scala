@@ -20,6 +20,13 @@ class Execute extends MultiIOModule {
       val Immediate = Input(SInt(32.W))
       val WBRegAddressIn = Input(UInt(5.W)) // Adressen til registeret vi vil skrive tilbake til (bit 11 til 7)
 
+      // For forwarding
+      val ALUOutMEM = Input(UInt(32.W))
+      val WBRegAddressOutMEM = Input(UInt(5.W))
+      val MuxDataOutWB = Input(UInt(32.W))
+      val WBRegAddressOutWB = Input(UInt(5.W))
+      val ReadRegAddress1 = Input(UInt(5.W))
+
       val PCPlusOffset = Output(UInt()) // PC pluss immediate verdi for branching
       val ControlSignalsOut = Output(new ControlSignals)
       val ALUOut = Output(UInt(32.W))
@@ -33,6 +40,8 @@ class Execute extends MultiIOModule {
   val op2MUX = Module(new MyMux).io
   val jumpMUX = Module(new MyMux).io
   val pcplus4MUX = Module(new MyMux).io
+
+  val forwardingUnit = Module(new Mux3).io
 
   val ALU = Module(new ALU).io
   val Adder = Module(new Adder).io
@@ -52,7 +61,22 @@ class Execute extends MultiIOModule {
   jumpMUX.in1 := io.RegA
   jumpMUX.sel := (io.branchType === branchType.jumpReg)
 
-  ALU.op1 := op1MUX.out
+  forwardingUnit.in0 := op1MUX.out
+  forwardingUnit.in1 := io.MuxDataOutWB
+  forwardingUnit.in2 := io.ALUOutMEM
+
+  when ((io.ReadRegAddress1 =/= io.WBRegAddressOutMEM) && (io.ReadRegAddress1 =/= io.WBRegAddressOutWB)) {
+    forwardingUnit.sel := 0.U
+  } .elsewhen ((io.ReadRegAddress1 =/= io.WBRegAddressOutMEM) && (io.ReadRegAddress1 === io.WBRegAddressOutWB)) {
+    forwardingUnit.sel := 1.U
+  } .elsewhen (io.ReadRegAddress1 === io.WBRegAddressOutMEM) {
+    forwardingUnit.sel := 2.U
+  } .otherwise {
+    forwardingUnit.sel := 3.U
+  }
+  
+
+  ALU.op1 := forwardingUnit.out
   ALU.op2 := op2MUX.out
   ALU.aluOp := io.ALUop
 

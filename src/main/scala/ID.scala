@@ -38,6 +38,9 @@ class InstructionDecode extends MultiIOModule {
       val RegB = Output(UInt(32.W))
       val Immediate = Output(SInt(32.W))
       val WBRegAddress = Output(UInt(5.W)) // Adressen til registeret vi vil skrive tilbake til (bit 11 til 7)
+
+      // For forwarding. Need the instruction signal in the EX stage to get the address of the registers that are being read
+      val ReadRegAddress1 = Output(UInt(5.W))
     }
   )
 
@@ -74,6 +77,8 @@ class InstructionDecode extends MultiIOModule {
   io.RegB := registers.io.readData2
   io.WBRegAddress := io.InstructionSignal.registerRd
   io.PCOut := io.PCIn
+
+  io.ReadRegAddress1 := io.InstructionSignal.registerRs1
 
   
   // finding the right type of immediate format to use, and sign extending it
