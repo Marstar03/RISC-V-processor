@@ -40,6 +40,7 @@ class IDBarrier() extends Module {
 
       // For forwarding
       val ReadRegAddress1In = Input(UInt(5.W))
+      val ReadRegAddress2In = Input(UInt(5.W))
 
       val PCOut = Output(UInt())
       val ControlSignalsOut = Output(new ControlSignals)
@@ -54,6 +55,7 @@ class IDBarrier() extends Module {
 
       // For forwarding
       val ReadRegAddress1Out = Output(UInt(5.W))
+      val ReadRegAddress2Out = Output(UInt(5.W))
     }
   )
 
@@ -101,6 +103,10 @@ class IDBarrier() extends Module {
   val ReadRegAddress1BarrierReg = RegInit(0.U(32.W))
   ReadRegAddress1BarrierReg := io.ReadRegAddress1In
   io.ReadRegAddress1Out := ReadRegAddress1BarrierReg
+
+  val ReadRegAddress2BarrierReg = RegInit(0.U(32.W))
+  ReadRegAddress2BarrierReg := io.ReadRegAddress2In
+  io.ReadRegAddress2Out := ReadRegAddress2BarrierReg
 }
 
 class EXBarrier() extends Module {

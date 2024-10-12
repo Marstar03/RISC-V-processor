@@ -75,6 +75,7 @@ class CPU extends MultiIOModule {
   IDBarrier.io.ImmediateIn := ID.io.Immediate
   IDBarrier.io.WBRegAddressIn := ID.io.WBRegAddress
   IDBarrier.io.ReadRegAddress1In := ID.io.ReadRegAddress1
+  IDBarrier.io.ReadRegAddress2In := ID.io.ReadRegAddress2
 
   EX.io.PCIn := IDBarrier.io.PCOut
   EX.io.ControlSignalsIn := IDBarrier.io.ControlSignalsOut
@@ -87,6 +88,7 @@ class CPU extends MultiIOModule {
   EX.io.Immediate := IDBarrier.io.ImmediateOut
   EX.io.WBRegAddressIn := IDBarrier.io.WBRegAddressOut
   EX.io.ReadRegAddress1 := IDBarrier.io.ReadRegAddress1Out
+  EX.io.ReadRegAddress2 := IDBarrier.io.ReadRegAddress2Out
 
   // EXBarrier signals
   EXBarrier.io.PCPlusOffsetIn := EX.io.PCPlusOffset

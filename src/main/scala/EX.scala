@@ -26,6 +26,7 @@ class Execute extends MultiIOModule {
       val MuxDataOutWB = Input(UInt(32.W))
       val WBRegAddressOutWB = Input(UInt(5.W))
       val ReadRegAddress1 = Input(UInt(5.W))
+      val ReadRegAddress2 = Input(UInt(5.W))
 
       val PCPlusOffset = Output(UInt()) // PC pluss immediate verdi for branching
       val ControlSignalsOut = Output(new ControlSignals)
@@ -41,42 +42,61 @@ class Execute extends MultiIOModule {
   val jumpMUX = Module(new MyMux).io
   val pcplus4MUX = Module(new MyMux).io
 
-  val forwardingUnit = Module(new Mux3).io
+  val forwardingUnit1 = Module(new Mux3).io
+  val forwardingUnit2 = Module(new Mux3).io
 
   val ALU = Module(new ALU).io
   val Adder = Module(new Adder).io
 
-  // mux to choose between RegA and PC for the ALU op1
-  op1MUX.in0 := io.RegA
-  op1MUX.in1 := io.PCIn
-  op1MUX.sel := io.op1Select
-
-  // mux to choose between RegB and the immediate for the ALU op 2
-  op2MUX.in0 := io.RegB
-  op2MUX.in1 := io.Immediate.asUInt
-  op2MUX.sel := io.op2Select
 
   // mux to choose between PC and RegA for adding with the immediate
   jumpMUX.in0 := io.PCIn
   jumpMUX.in1 := io.RegA
   jumpMUX.sel := (io.branchType === branchType.jumpReg)
 
-  forwardingUnit.in0 := op1MUX.out
-  forwardingUnit.in1 := io.MuxDataOutWB
-  forwardingUnit.in2 := io.ALUOutMEM
+  forwardingUnit1.in0 := io.RegA
+  forwardingUnit1.in1 := io.MuxDataOutWB
+  forwardingUnit1.in2 := io.ALUOutMEM
 
   when ((io.ReadRegAddress1 =/= io.WBRegAddressOutMEM) && (io.ReadRegAddress1 =/= io.WBRegAddressOutWB)) {
-    forwardingUnit.sel := 0.U
+    forwardingUnit1.sel := 0.U
   } .elsewhen ((io.ReadRegAddress1 =/= io.WBRegAddressOutMEM) && (io.ReadRegAddress1 === io.WBRegAddressOutWB)) {
-    forwardingUnit.sel := 1.U
+    forwardingUnit1.sel := 1.U
   } .elsewhen (io.ReadRegAddress1 === io.WBRegAddressOutMEM) {
-    forwardingUnit.sel := 2.U
+    forwardingUnit1.sel := 2.U
   } .otherwise {
-    forwardingUnit.sel := 3.U
+    forwardingUnit1.sel := 3.U
   }
+
+
+  // mux to choose between forwardingUnit1.out and PC for the ALU op1
+  op1MUX.in0 := forwardingUnit1.out
+  op1MUX.in1 := io.PCIn
+  op1MUX.sel := io.op1Select
+
+
+  forwardingUnit2.in0 := io.RegB
+  forwardingUnit2.in1 := io.MuxDataOutWB
+  forwardingUnit2.in2 := io.ALUOutMEM
+
+  when ((io.ReadRegAddress2 =/= io.WBRegAddressOutMEM) && (io.ReadRegAddress2 =/= io.WBRegAddressOutWB)) {
+    forwardingUnit2.sel := 0.U
+  } .elsewhen ((io.ReadRegAddress2 =/= io.WBRegAddressOutMEM) && (io.ReadRegAddress2 === io.WBRegAddressOutWB)) {
+    forwardingUnit2.sel := 1.U
+  } .elsewhen (io.ReadRegAddress2 === io.WBRegAddressOutMEM) {
+    forwardingUnit2.sel := 2.U
+  } .otherwise {
+    forwardingUnit2.sel := 3.U
+  }
+
+
+  // mux to choose between forwardingUnit2.out and the immediate for the ALU op 2
+  op2MUX.in0 := forwardingUnit2.out
+  op2MUX.in1 := io.Immediate.asUInt
+  op2MUX.sel := io.op2Select
   
 
-  ALU.op1 := forwardingUnit.out
+  ALU.op1 := forwardingUnit1.out
   ALU.op2 := op2MUX.out
   ALU.aluOp := io.ALUop
 
