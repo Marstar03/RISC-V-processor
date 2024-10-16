@@ -30,6 +30,7 @@ class Execute extends MultiIOModule {
       val ControlSignalsOutMEM = Input(new ControlSignals)
       val ControlSignalsPrevMEM = Input(new ControlSignals)
       val MemDataMEM = Input(UInt(32.W))
+      val InstructionSignalIn = Input(new Instruction)
 
       val PCPlusOffset = Output(UInt()) // PC pluss immediate verdi for branching
       val ControlSignalsOut = Output(new ControlSignals)
@@ -69,7 +70,11 @@ class Execute extends MultiIOModule {
   }
   //forwardingUnit1.in2 := io.ALUOutMEM
 
-  when ((io.ReadRegAddress1 =/= io.WBRegAddressOutMEM) && (io.ReadRegAddress1 =/= io.WBRegAddressOutWB)) {
+  // val nopControlSignals = Wire(new ControlSignals)
+  // nopControlSignals := nopControlSignals.nop
+
+  // må legge til som condition at vi kun forwarder dersom denne instruksjonen ikke er en nop
+  when (((io.ReadRegAddress1 =/= io.WBRegAddressOutMEM) && (io.ReadRegAddress1 =/= io.WBRegAddressOutWB)) || (io.InstructionSignalIn.instruction === "h00000013".U)) {
     forwardingUnit1.sel := 0.U
   } .elsewhen ((io.ReadRegAddress1 =/= io.WBRegAddressOutMEM) && (io.ReadRegAddress1 === io.WBRegAddressOutWB)) {
     forwardingUnit1.sel := 1.U

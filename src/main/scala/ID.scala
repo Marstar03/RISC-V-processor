@@ -42,6 +42,7 @@ class InstructionDecode extends MultiIOModule {
       // For forwarding. Need the instruction signal in the EX stage to get the address of the registers that are being read
       val ReadRegAddress1 = Output(UInt(5.W))
       val ReadRegAddress2 = Output(UInt(5.W))
+      val InstructionSignalOut = Output(new Instruction)
     }
   )
 
@@ -96,6 +97,7 @@ class InstructionDecode extends MultiIOModule {
 
   io.ReadRegAddress1 := io.InstructionSignal.registerRs1
   io.ReadRegAddress2 := io.InstructionSignal.registerRs2
+  io.InstructionSignalOut := io.InstructionSignal
 
   
   // finding the right type of immediate format to use, and sign extending it
