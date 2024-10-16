@@ -27,6 +27,8 @@ class InstructionFetch extends MultiIOModule {
       val ControlSignalsIn = Input(new ControlSignals)
       val shouldBranchIn = Input(Bool())
 
+      val stall = Input(Bool())
+
       val PC = Output(UInt())
       val InstructionSignal = Output(new Instruction)
     })
@@ -56,6 +58,9 @@ class InstructionFetch extends MultiIOModule {
   InstrMUX.sel := io.shouldBranchIn
 
   // the pc output signal will then either remain pc or be updated to the pc + offset
+  // when (!io.stall) {
+  //   io.PC := InstrMUX.out
+  // }
   io.PC := InstrMUX.out
   IMEM.io.instructionAddress := InstrMUX.out
 
@@ -64,7 +69,22 @@ class InstructionFetch extends MultiIOModule {
   pcMUX.in1 := io.PCPlusOffsetIn + 4.U
   pcMUX.sel := io.shouldBranchIn
 
-  PC := pcMUX.out
+  //PC := pcMUX.out
+
+  when (!io.stall) {
+    PC := pcMUX.out
+  }
+
+  // // Register to hold the next PC value
+  // val nextPC = RegInit(PC)
+
+  // // Update the nextPC register based on the stall signal
+  // when (!io.stall) {
+  //   nextPC := pcMUX.out
+  // }
+
+  // // Update the PC register with the value from nextPC
+  // PC := nextPC
 
   val instruction = Wire(new Instruction)
   instruction := IMEM.io.instruction.asTypeOf(new Instruction)

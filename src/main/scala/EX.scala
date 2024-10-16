@@ -27,6 +27,9 @@ class Execute extends MultiIOModule {
       val WBRegAddressOutWB = Input(UInt(5.W))
       val ReadRegAddress1 = Input(UInt(5.W))
       val ReadRegAddress2 = Input(UInt(5.W))
+      val ControlSignalsOutMEM = Input(new ControlSignals)
+      val ControlSignalsPrevMEM = Input(new ControlSignals)
+      val MemDataMEM = Input(UInt(32.W))
 
       val PCPlusOffset = Output(UInt()) // PC pluss immediate verdi for branching
       val ControlSignalsOut = Output(new ControlSignals)
@@ -34,6 +37,9 @@ class Execute extends MultiIOModule {
       val RegBOut = Output(UInt(32.W))
       val WBRegAddressOut = Output(UInt(5.W))
       val shouldBranch = Output(Bool())
+
+      // For forwarding
+      val stall = Output(Bool())
     }
   )
 
@@ -56,7 +62,12 @@ class Execute extends MultiIOModule {
 
   forwardingUnit1.in0 := io.RegA
   forwardingUnit1.in1 := io.MuxDataOutWB
-  forwardingUnit1.in2 := io.ALUOutMEM
+  when (io.ControlSignalsPrevMEM.memRead === false.B) {
+    forwardingUnit1.in2 := io.ALUOutMEM
+  } .otherwise {
+    forwardingUnit1.in2 := io.MemDataMEM
+  }
+  //forwardingUnit1.in2 := io.ALUOutMEM
 
   when ((io.ReadRegAddress1 =/= io.WBRegAddressOutMEM) && (io.ReadRegAddress1 =/= io.WBRegAddressOutWB)) {
     forwardingUnit1.sel := 0.U
@@ -96,7 +107,7 @@ class Execute extends MultiIOModule {
   op2MUX.sel := io.op2Select
   
 
-  ALU.op1 := forwardingUnit1.out
+  ALU.op1 := op1MUX.out
   ALU.op2 := op2MUX.out
   ALU.aluOp := io.ALUop
 
@@ -133,5 +144,23 @@ class Execute extends MultiIOModule {
                   ((io.branchType === branchType.gte) && (ALU.aluResult === 0.U)) ||
                   ((io.branchType === branchType.ltu) && (ALU.aluResult === 1.U)) ||
                   ((io.branchType === branchType.gteu) && (ALU.aluResult === 0.U))
+
+
+
+  val hazardDetectionUnit = Module(new HazardDetectionUnit)
+
+  hazardDetectionUnit.io.RegWriteMEM := io.ControlSignalsOutMEM.regWrite
+  hazardDetectionUnit.io.MemReadMEM := io.ControlSignalsOutMEM.memRead
+  hazardDetectionUnit.io.RegisterRdMEM := io.WBRegAddressOutMEM
+  hazardDetectionUnit.io.RegisterRs1EX := io.ReadRegAddress1
+  hazardDetectionUnit.io.RegisterRs2EX := io.ReadRegAddress2
+
+  io.stall := hazardDetectionUnit.io.stall
+
+  // when (((forwardingUnit1.sel === 2.U) && (op1MUX.sel === 0.U)) || ((forwardingUnit2.sel === 2.U) && (op2MUX.sel === 0.U))) {
+  //   io.stall := false.B
+  // } .otherwise {
+  //   io.stall := false.B
+  // }
 
 }

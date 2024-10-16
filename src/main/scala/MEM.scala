@@ -31,6 +31,8 @@ class MemoryFetch() extends MultiIOModule {
       val MemData = Output(UInt(32.W))
       val WBRegAddressOut = Output(UInt(5.W))
       val shouldBranchOut = Output(Bool())
+
+      val ControlSignalsPrev = Output(new ControlSignals)
     })
 
 
@@ -60,5 +62,10 @@ class MemoryFetch() extends MultiIOModule {
   io.MemData := DMEM.io.dataOut
   io.WBRegAddressOut := io.WBRegAddressIn
   io.shouldBranchOut := io.shouldBranchIn
+
+  val ControlSignalsPrevReg = RegInit(0.U.asTypeOf(new ControlSignals))
+  ControlSignalsPrevReg := io.ControlSignalsIn
+  io.ControlSignalsPrev := ControlSignalsPrevReg
+
 
 }

@@ -59,6 +59,7 @@ class CPU extends MultiIOModule {
   // IFBarrier signals
   IFBarrier.io.PCIn := IF.io.PC
   IFBarrier.io.InstructionIn := IF.io.InstructionSignal
+  IFBarrier.io.stall := EX.io.stall
 
   ID.io.PCIn := IFBarrier.io.PCOut
   ID.io.InstructionSignal := IFBarrier.io.InstructionOut
@@ -76,6 +77,7 @@ class CPU extends MultiIOModule {
   IDBarrier.io.WBRegAddressIn := ID.io.WBRegAddress
   IDBarrier.io.ReadRegAddress1In := ID.io.ReadRegAddress1
   IDBarrier.io.ReadRegAddress2In := ID.io.ReadRegAddress2
+  IDBarrier.io.stall := EX.io.stall
 
   EX.io.PCIn := IDBarrier.io.PCOut
   EX.io.ControlSignalsIn := IDBarrier.io.ControlSignalsOut
@@ -97,6 +99,7 @@ class CPU extends MultiIOModule {
   EXBarrier.io.RegBIn := EX.io.RegBOut
   EXBarrier.io.WBRegAddressIn := EX.io.WBRegAddressOut
   EXBarrier.io.shouldBranchIn := EX.io.shouldBranch
+  EXBarrier.io.stall := EX.io.stall
 
   MEM.io.PCPlusOffsetIn := EXBarrier.io.PCPlusOffsetOut
   MEM.io.ControlSignalsIn := EXBarrier.io.ControlSignalsOut
@@ -110,6 +113,7 @@ class CPU extends MultiIOModule {
   MEMBarrier.io.ALUIn := MEM.io.ALUOut
   MEMBarrier.io.MemDataIn := MEM.io.MemData
   MEMBarrier.io.WBRegAddressIn := MEM.io.WBRegAddressOut
+  //MEMBarrier.io.stall := EX.io.stall
 
   WB.io.ControlSignalsIn := MEMBarrier.io.ControlSignalsOut
   WB.io.ALUIn := MEMBarrier.io.ALUOut
@@ -134,9 +138,15 @@ class CPU extends MultiIOModule {
   // MEM to EX
   EX.io.ALUOutMEM := MEM.io.ALUOut
   EX.io.WBRegAddressOutMEM := MEM.io.WBRegAddressOut
+  EX.io.ControlSignalsOutMEM := MEM.io.ControlSignalsOut
+  EX.io.ControlSignalsPrevMEM := MEM.io.ControlSignalsPrev
+  EX.io.MemDataMEM := MEM.io.MemData
 
   // WB to EX
   EX.io.MuxDataOutWB := WB.io.MuxDataOut
   EX.io.WBRegAddressOutWB := WB.io.WBRegAddressOut
+
+  // EX to IF
+  IF.io.stall := EX.io.stall
 
 }
