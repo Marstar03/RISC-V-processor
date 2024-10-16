@@ -132,7 +132,8 @@ class Execute extends MultiIOModule {
 
   // signals that we keep to the mem stage
   io.ControlSignalsOut := io.ControlSignalsIn
-  io.RegBOut := io.RegB
+  // må fikse slik at RegBOut får 
+  io.RegBOut := forwardingUnit2.out
   io.WBRegAddressOut := io.WBRegAddressIn
 
   // shouldbranch is a signal that is true if any of the conditions for branch/jump is satisfied
