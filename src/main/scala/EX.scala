@@ -31,6 +31,9 @@ class Execute extends MultiIOModule {
       val ControlSignalsPrevMEM = Input(new ControlSignals)
       val MemDataMEM = Input(UInt(32.W))
       val InstructionSignalIn = Input(new Instruction)
+      val ControlSignalsOutWB = Input(new ControlSignals)
+      val InstructionSignalOutMEM = Input(new Instruction)
+      val InstructionSignalOutWB = Input(new Instruction)
 
       val PCPlusOffset = Output(UInt()) // PC pluss immediate verdi for branching
       val ControlSignalsOut = Output(new ControlSignals)
@@ -38,6 +41,7 @@ class Execute extends MultiIOModule {
       val RegBOut = Output(UInt(32.W))
       val WBRegAddressOut = Output(UInt(5.W))
       val shouldBranch = Output(Bool())
+      val InstructionSignalOut = Output(new Instruction)
 
       // For forwarding
       val stall = Output(Bool())
@@ -73,16 +77,27 @@ class Execute extends MultiIOModule {
   // val nopControlSignals = Wire(new ControlSignals)
   // nopControlSignals := nopControlSignals.nop
 
+  // Sjekker om instruksjonen i EX er en nop
+  val isNOPEX = (io.InstructionSignalIn.instruction === "h00000013".U)
+
+  // Sjekker om instruksjonen i MEM er en nop
+  val isNOPMEM = (io.InstructionSignalOutMEM.instruction === "h00000013".U)
+
+  // Sjekker om instruksjonen i WB er en nop
+  val isNOPWB = (io.InstructionSignalOutWB.instruction === "h00000013".U)
+
   // må legge til som condition at vi kun forwarder dersom denne instruksjonen ikke er en nop
-  when (((io.ReadRegAddress1 =/= io.WBRegAddressOutMEM) && (io.ReadRegAddress1 =/= io.WBRegAddressOutWB)) || (io.InstructionSignalIn.instruction === "h00000013".U)) {
+  when (((io.ReadRegAddress1 =/= io.WBRegAddressOutMEM) && (io.ReadRegAddress1 =/= io.WBRegAddressOutWB)) || isNOPEX || ((isNOPMEM) || (isNOPWB))) {
     forwardingUnit1.sel := 0.U
-  } .elsewhen ((io.ReadRegAddress1 =/= io.WBRegAddressOutMEM) && (io.ReadRegAddress1 === io.WBRegAddressOutWB)) {
+  } .elsewhen ((io.ReadRegAddress1 =/= io.WBRegAddressOutMEM) && (io.ReadRegAddress1 === io.WBRegAddressOutWB) && (!isNOPWB)) {
     forwardingUnit1.sel := 1.U
-  } .elsewhen (io.ReadRegAddress1 === io.WBRegAddressOutMEM) {
+  } .elsewhen ((io.ReadRegAddress1 === io.WBRegAddressOutMEM) && (!isNOPMEM)) {
     forwardingUnit1.sel := 2.U
   } .otherwise {
     forwardingUnit1.sel := 3.U
   }
+
+  //forwardingUnit1.sel := 0.U
 
 
   // mux to choose between forwardingUnit1.out and PC for the ALU op1
@@ -95,15 +110,17 @@ class Execute extends MultiIOModule {
   forwardingUnit2.in1 := io.MuxDataOutWB
   forwardingUnit2.in2 := io.ALUOutMEM
 
-  when ((io.ReadRegAddress2 =/= io.WBRegAddressOutMEM) && (io.ReadRegAddress2 =/= io.WBRegAddressOutWB)) {
+  when ((io.ReadRegAddress2 =/= io.WBRegAddressOutMEM) && (io.ReadRegAddress2 =/= io.WBRegAddressOutWB) || isNOPEX || ((isNOPMEM) || (isNOPWB))) {
     forwardingUnit2.sel := 0.U
-  } .elsewhen ((io.ReadRegAddress2 =/= io.WBRegAddressOutMEM) && (io.ReadRegAddress2 === io.WBRegAddressOutWB)) {
+  } .elsewhen ((io.ReadRegAddress2 =/= io.WBRegAddressOutMEM) && (io.ReadRegAddress2 === io.WBRegAddressOutWB) && (!isNOPWB)) {
     forwardingUnit2.sel := 1.U
-  } .elsewhen (io.ReadRegAddress2 === io.WBRegAddressOutMEM) {
+  } .elsewhen ((io.ReadRegAddress2 === io.WBRegAddressOutMEM) && (!isNOPMEM)) {
     forwardingUnit2.sel := 2.U
   } .otherwise {
     forwardingUnit2.sel := 3.U
   }
+
+  //forwardingUnit2.sel := 0.U
 
 
   // mux to choose between forwardingUnit2.out and the immediate for the ALU op 2
@@ -139,7 +156,9 @@ class Execute extends MultiIOModule {
   io.ControlSignalsOut := io.ControlSignalsIn
   // må fikse slik at RegBOut får 
   io.RegBOut := forwardingUnit2.out
+  //io.RegBOut := io.RegB
   io.WBRegAddressOut := io.WBRegAddressIn
+  io.InstructionSignalOut := io.InstructionSignalIn
 
   // shouldbranch is a signal that is true if any of the conditions for branch/jump is satisfied
   // so it decides if we should use the pcplusoffset signal for addressing the next instruction

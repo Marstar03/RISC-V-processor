@@ -102,6 +102,7 @@ class CPU extends MultiIOModule {
   EXBarrier.io.WBRegAddressIn := EX.io.WBRegAddressOut
   EXBarrier.io.shouldBranchIn := EX.io.shouldBranch
   EXBarrier.io.stall := EX.io.stall
+  EXBarrier.io.InstructionSignalIn := EX.io.InstructionSignalOut
 
   MEM.io.PCPlusOffsetIn := EXBarrier.io.PCPlusOffsetOut
   MEM.io.ControlSignalsIn := EXBarrier.io.ControlSignalsOut
@@ -109,18 +110,21 @@ class CPU extends MultiIOModule {
   MEM.io.RegB := EXBarrier.io.RegBOut
   MEM.io.WBRegAddressIn := EXBarrier.io.WBRegAddressOut
   MEM.io.shouldBranchIn := EXBarrier.io.shouldBranchOut
+  MEM.io.InstructionSignalIn := EXBarrier.io.InstructionSignalOut
 
   // MEMBarrier signals
   MEMBarrier.io.ControlSignalsIn := MEM.io.ControlSignalsOut
   MEMBarrier.io.ALUIn := MEM.io.ALUOut
   MEMBarrier.io.MemDataIn := MEM.io.MemData
   MEMBarrier.io.WBRegAddressIn := MEM.io.WBRegAddressOut
+  MEMBarrier.io.InstructionSignalIn := MEM.io.InstructionSignalOut
   //MEMBarrier.io.stall := EX.io.stall
 
   WB.io.ControlSignalsIn := MEMBarrier.io.ControlSignalsOut
   WB.io.ALUIn := MEMBarrier.io.ALUOut
   WB.io.MemDataIn := MEMBarrier.io.MemDataOut
   WB.io.WBRegAddressIn := MEMBarrier.io.WBRegAddressOut
+  WB.io.InstructionSignalIn := MEMBarrier.io.InstructionSignalOut
 
   // Rest of signals
 
@@ -133,6 +137,10 @@ class CPU extends MultiIOModule {
   ID.io.WBRegAddressIn := WB.io.WBRegAddressOut
   ID.io.RegDataIn := WB.io.MuxDataOut
   ID.io.ControlSignalsIn := WB.io.ControlSignalsOut
+  ID.io.InstructionSignalOutWB := WB.io.InstructionSignalOut
+
+  // EX to ID
+  ID.io.InstructionSignalOutEX := EX.io.InstructionSignalOut
 
 
   // For forwarding
@@ -143,10 +151,13 @@ class CPU extends MultiIOModule {
   EX.io.ControlSignalsOutMEM := MEM.io.ControlSignalsOut
   EX.io.ControlSignalsPrevMEM := MEM.io.ControlSignalsPrev
   EX.io.MemDataMEM := MEM.io.MemData
+  EX.io.InstructionSignalOutMEM := MEM.io.InstructionSignalOut
 
   // WB to EX
   EX.io.MuxDataOutWB := WB.io.MuxDataOut
   EX.io.WBRegAddressOutWB := WB.io.WBRegAddressOut
+  EX.io.ControlSignalsOutWB := WB.io.ControlSignalsOut
+  EX.io.InstructionSignalOutWB := WB.io.InstructionSignalOut
 
   // EX to IF
   IF.io.stall := EX.io.stall

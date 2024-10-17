@@ -152,6 +152,7 @@ class EXBarrier() extends Module {
 
       // For forwarding
       val stall = Input(Bool())
+      val InstructionSignalIn = Input(new Instruction)
 
       val PCPlusOffsetOut = Output(UInt())
       val ControlSignalsOut = Output(new ControlSignals)
@@ -159,6 +160,7 @@ class EXBarrier() extends Module {
       val RegBOut = Output(UInt(32.W))
       val WBRegAddressOut = Output(UInt(5.W))
       val shouldBranchOut = Output(Bool())
+      val InstructionSignalOut = Output(new Instruction)
     }
   )
 
@@ -168,6 +170,7 @@ class EXBarrier() extends Module {
   val RegBBarrierReg = RegInit(0.U(32.W))
   val WBRegAddressBarrierReg = RegInit(0.U(32.W))
   val shouldBranchBarrierReg = RegInit(0.U.asTypeOf(new Bool))
+  val InstructionSignalBarrierReg = RegInit(0.U.asTypeOf(new Instruction))
 
   //val stallReg = RegInit(0.U.asTypeOf(new Bool))
 
@@ -181,6 +184,7 @@ class EXBarrier() extends Module {
   RegBBarrierReg := io.RegBIn
   WBRegAddressBarrierReg := io.WBRegAddressIn
   shouldBranchBarrierReg := io.shouldBranchIn
+  InstructionSignalBarrierReg := io.InstructionSignalIn
 
   when (!io.stall) {
     ControlSignalsBarrierReg := io.ControlSignalsIn
@@ -198,6 +202,7 @@ class EXBarrier() extends Module {
   io.WBRegAddressOut := WBRegAddressBarrierReg
 
   io.shouldBranchOut := shouldBranchBarrierReg
+  io.InstructionSignalOut := InstructionSignalBarrierReg
 }
 
 class MEMBarrier() extends Module {
@@ -211,17 +216,20 @@ class MEMBarrier() extends Module {
 
       // For forwarding
       //val stall = Input(Bool())
+      val InstructionSignalIn = Input(new Instruction)
 
       val ControlSignalsOut = Output(new ControlSignals)
       val ALUOut = Output(UInt(32.W))
       val MemDataOut = Output(UInt(32.W))
       val WBRegAddressOut = Output(UInt(5.W))
+      val InstructionSignalOut = Output(new Instruction)
     }
   )
 
   val ControlSignalsBarrierReg = RegInit(0.U.asTypeOf(new ControlSignals))
   val ALUBarrierReg = RegInit(0.U(32.W))
   val WBRegAddressBarrierReg = RegInit(0.U(32.W))
+  val InstructionSignalBarrierReg = RegInit(0.U.asTypeOf(new Instruction))
 
   //val stallReg = RegInit(0.U.asTypeOf(new Bool))
   //stallReg := io.stall
@@ -231,6 +239,7 @@ class MEMBarrier() extends Module {
   ControlSignalsBarrierReg := io.ControlSignalsIn
   ALUBarrierReg := io.ALUIn
   WBRegAddressBarrierReg := io.WBRegAddressIn
+  InstructionSignalBarrierReg := io.InstructionSignalIn
 
   //}
 
@@ -241,4 +250,5 @@ class MEMBarrier() extends Module {
   io.MemDataOut := io.MemDataIn
   
   io.WBRegAddressOut := WBRegAddressBarrierReg
+  io.InstructionSignalOut := InstructionSignalBarrierReg
 }

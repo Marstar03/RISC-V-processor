@@ -26,7 +26,9 @@ class InstructionDecode extends MultiIOModule {
       val InstructionSignal = Input(new Instruction)
       val WBRegAddressIn = Input(UInt(5.W))
       val RegDataIn = Input(UInt(32.W))
-      val ControlSignalsIn = Input(new ControlSignals) 
+      val ControlSignalsIn = Input(new ControlSignals)
+      val InstructionSignalOutWB = Input(new Instruction)
+      val InstructionSignalOutEX = Input(new Instruction)
 
       val PCOut = Output(UInt())
       val ControlSignals = Output(new ControlSignals)
@@ -43,6 +45,7 @@ class InstructionDecode extends MultiIOModule {
       val ReadRegAddress1 = Output(UInt(5.W))
       val ReadRegAddress2 = Output(UInt(5.W))
       val InstructionSignalOut = Output(new Instruction)
+      val isNop = Output(Bool())
     }
   )
 
@@ -76,19 +79,33 @@ class InstructionDecode extends MultiIOModule {
   io.op2Select := decoder.op2Select
   io.ALUop := decoder.ALUop
 
-  // Forwarding for readAddress1
-  when(io.InstructionSignal.registerRs1 === io.WBRegAddressIn) {
+  // Sjekker om instruksjonen i EX er en nop
+  val isNOPID = (io.InstructionSignal.instruction === "h00000013".U)
+
+  val isNOPWB = (io.InstructionSignalOutWB.instruction === "h00000013".U)
+
+  val isNOPEX = (io.InstructionSignalOutEX.instruction === "h00000013".U)
+
+  io.isNop := isNOPWB
+  // val nopReg = RegInit(0.U.asTypeOf(new Bool))
+  // nopReg := isNOPWB
+
+  //Forwarding for readAddress1
+  when((io.InstructionSignal.registerRs1 === io.WBRegAddressIn) && (io.ControlSignalsIn.regWrite) && (!isNOPWB)) {
     io.RegA := io.RegDataIn
   } .otherwise {
     io.RegA := registers.io.readData1
   }
+  //io.RegA := registers.io.readData1
 
-  // Forwarding for readAddress2
-  when(io.InstructionSignal.registerRs2 === io.WBRegAddressIn) {
+  //Forwarding for readAddress2
+  when((io.InstructionSignal.registerRs2 === io.WBRegAddressIn) && (io.ControlSignalsIn.regWrite) && (!isNOPWB) && (!isNOPID) && (!isNOPEX)) {
     io.RegB := io.RegDataIn
   } .otherwise {
     io.RegB := registers.io.readData2
   }
+
+  //io.RegB := registers.io.readData2
 
   //io.RegA := registers.io.readData1
   //io.RegB := registers.io.readData2
