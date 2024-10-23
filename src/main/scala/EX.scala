@@ -87,11 +87,11 @@ class Execute extends MultiIOModule {
   val isNOPWB = (io.InstructionSignalOutWB.instruction === "h00000013".U)
 
   // må legge til som condition at vi kun forwarder dersom denne instruksjonen ikke er en nop
-  when (((io.ReadRegAddress1 =/= io.WBRegAddressOutMEM) && (io.ReadRegAddress1 =/= io.WBRegAddressOutWB)) || isNOPEX || ((isNOPMEM) || (isNOPWB))) {
+  when (((io.ReadRegAddress1 =/= io.WBRegAddressOutMEM) && (io.ReadRegAddress1 =/= io.WBRegAddressOutWB))) {
     forwardingUnit1.sel := 0.U
-  } .elsewhen ((io.ReadRegAddress1 =/= io.WBRegAddressOutMEM) && (io.ReadRegAddress1 === io.WBRegAddressOutWB) && (!isNOPWB)) {
+  } .elsewhen ((io.ReadRegAddress1 =/= io.WBRegAddressOutMEM) && (io.ReadRegAddress1 === io.WBRegAddressOutWB)) {
     forwardingUnit1.sel := 1.U
-  } .elsewhen ((io.ReadRegAddress1 === io.WBRegAddressOutMEM) && (!isNOPMEM)) {
+  } .elsewhen ((io.ReadRegAddress1 === io.WBRegAddressOutMEM)) {
     forwardingUnit1.sel := 2.U
   } .otherwise {
     forwardingUnit1.sel := 3.U
@@ -110,11 +110,11 @@ class Execute extends MultiIOModule {
   forwardingUnit2.in1 := io.MuxDataOutWB
   forwardingUnit2.in2 := io.ALUOutMEM
 
-  when ((io.ReadRegAddress2 =/= io.WBRegAddressOutMEM) && (io.ReadRegAddress2 =/= io.WBRegAddressOutWB) || isNOPEX || ((isNOPMEM) || (isNOPWB))) {
+  when ((io.ReadRegAddress2 =/= io.WBRegAddressOutMEM) && (io.ReadRegAddress2 =/= io.WBRegAddressOutWB)) {
     forwardingUnit2.sel := 0.U
-  } .elsewhen ((io.ReadRegAddress2 =/= io.WBRegAddressOutMEM) && (io.ReadRegAddress2 === io.WBRegAddressOutWB) && (!isNOPWB)) {
+  } .elsewhen ((io.ReadRegAddress2 =/= io.WBRegAddressOutMEM) && (io.ReadRegAddress2 === io.WBRegAddressOutWB)) {
     forwardingUnit2.sel := 1.U
-  } .elsewhen ((io.ReadRegAddress2 === io.WBRegAddressOutMEM) && (!isNOPMEM)) {
+  } .elsewhen ((io.ReadRegAddress2 === io.WBRegAddressOutMEM)) {
     forwardingUnit2.sel := 2.U
   } .otherwise {
     forwardingUnit2.sel := 3.U

@@ -91,7 +91,7 @@ class InstructionDecode extends MultiIOModule {
   // nopReg := isNOPWB
 
   //Forwarding for readAddress1
-  when((io.InstructionSignal.registerRs1 === io.WBRegAddressIn) && (io.ControlSignalsIn.regWrite) && (!isNOPWB)) {
+  when((io.InstructionSignal.registerRs1 === io.WBRegAddressIn) && (io.ControlSignalsIn.regWrite)) {
     io.RegA := io.RegDataIn
   } .otherwise {
     io.RegA := registers.io.readData1
@@ -99,7 +99,7 @@ class InstructionDecode extends MultiIOModule {
   //io.RegA := registers.io.readData1
 
   //Forwarding for readAddress2
-  when((io.InstructionSignal.registerRs2 === io.WBRegAddressIn) && (io.ControlSignalsIn.regWrite) && (!isNOPWB) && (!isNOPID) && (!isNOPEX)) {
+  when((io.InstructionSignal.registerRs2 === io.WBRegAddressIn) && (io.ControlSignalsIn.regWrite)) {
     io.RegB := io.RegDataIn
   } .otherwise {
     io.RegB := registers.io.readData2
