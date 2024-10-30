@@ -60,6 +60,7 @@ class CPU extends MultiIOModule {
   IFBarrier.io.PCIn := IF.io.PC
   IFBarrier.io.InstructionIn := IF.io.InstructionSignal
   IFBarrier.io.stall := EX.io.stall
+  IFBarrier.io.shouldBranch := EX.io.shouldBranch
 
   ID.io.PCIn := IFBarrier.io.PCOut
   ID.io.InstructionSignal := IFBarrier.io.InstructionOut
@@ -78,7 +79,8 @@ class CPU extends MultiIOModule {
   IDBarrier.io.ReadRegAddress1In := ID.io.ReadRegAddress1
   IDBarrier.io.ReadRegAddress2In := ID.io.ReadRegAddress2
   IDBarrier.io.stall := EX.io.stall
-  IDBarrier.io.InstructionSignalIn := ID.io.InstructionSignalOut
+  IDBarrier.io.PCPlusOffsetEX := EX.io.PCPlusOffset
+  IDBarrier.io.isBranching := EX.io.isBranching
 
   EX.io.PCIn := IDBarrier.io.PCOut
   EX.io.ControlSignalsIn := IDBarrier.io.ControlSignalsOut
@@ -92,7 +94,6 @@ class CPU extends MultiIOModule {
   EX.io.WBRegAddressIn := IDBarrier.io.WBRegAddressOut
   EX.io.ReadRegAddress1 := IDBarrier.io.ReadRegAddress1Out
   EX.io.ReadRegAddress2 := IDBarrier.io.ReadRegAddress2Out
-  EX.io.InstructionSignalIn := IDBarrier.io.InstructionSignalOut
 
   // EXBarrier signals
   EXBarrier.io.PCPlusOffsetIn := EX.io.PCPlusOffset
@@ -102,7 +103,8 @@ class CPU extends MultiIOModule {
   EXBarrier.io.WBRegAddressIn := EX.io.WBRegAddressOut
   EXBarrier.io.shouldBranchIn := EX.io.shouldBranch
   EXBarrier.io.stall := EX.io.stall
-  EXBarrier.io.InstructionSignalIn := EX.io.InstructionSignalOut
+
+  EXBarrier.io.EXShouldNOPCS := IDBarrier.io.EXShouldNOPCS
 
   MEM.io.PCPlusOffsetIn := EXBarrier.io.PCPlusOffsetOut
   MEM.io.ControlSignalsIn := EXBarrier.io.ControlSignalsOut
@@ -110,38 +112,31 @@ class CPU extends MultiIOModule {
   MEM.io.RegB := EXBarrier.io.RegBOut
   MEM.io.WBRegAddressIn := EXBarrier.io.WBRegAddressOut
   MEM.io.shouldBranchIn := EXBarrier.io.shouldBranchOut
-  MEM.io.InstructionSignalIn := EXBarrier.io.InstructionSignalOut
+  MEM.io.invalidInstructionIn := EXBarrier.io.invalidInstruction
 
   // MEMBarrier signals
   MEMBarrier.io.ControlSignalsIn := MEM.io.ControlSignalsOut
   MEMBarrier.io.ALUIn := MEM.io.ALUOut
   MEMBarrier.io.MemDataIn := MEM.io.MemData
   MEMBarrier.io.WBRegAddressIn := MEM.io.WBRegAddressOut
-  MEMBarrier.io.InstructionSignalIn := MEM.io.InstructionSignalOut
   //MEMBarrier.io.stall := EX.io.stall
+  MEMBarrier.io.invalidInstructionIn := MEM.io.invalidInstructionOut
 
   WB.io.ControlSignalsIn := MEMBarrier.io.ControlSignalsOut
   WB.io.ALUIn := MEMBarrier.io.ALUOut
   WB.io.MemDataIn := MEMBarrier.io.MemDataOut
   WB.io.WBRegAddressIn := MEMBarrier.io.WBRegAddressOut
-  WB.io.InstructionSignalIn := MEMBarrier.io.InstructionSignalOut
+  WB.io.invalidInstructionIn := MEMBarrier.io.invalidInstructionOut
 
   // Rest of signals
 
-  // MEM to IF
-  IF.io.PCPlusOffsetIn := MEM.io.PCPlusOffsetOut
-  IF.io.ControlSignalsIn := MEM.io.ControlSignalsOut
-  IF.io.shouldBranchIn := MEM.io.shouldBranchOut
+  // MEM to ID
+  ID.io.shouldBranch := MEM.io.shouldBranchOut
 
   // WB to ID
   ID.io.WBRegAddressIn := WB.io.WBRegAddressOut
   ID.io.RegDataIn := WB.io.MuxDataOut
   ID.io.ControlSignalsIn := WB.io.ControlSignalsOut
-  ID.io.InstructionSignalOutWB := WB.io.InstructionSignalOut
-
-  // EX to ID
-  ID.io.InstructionSignalOutEX := EX.io.InstructionSignalOut
-
 
   // For forwarding
   
@@ -151,15 +146,19 @@ class CPU extends MultiIOModule {
   EX.io.ControlSignalsOutMEM := MEM.io.ControlSignalsOut
   EX.io.ControlSignalsPrevMEM := MEM.io.ControlSignalsPrev
   EX.io.MemDataMEM := MEM.io.MemData
-  EX.io.InstructionSignalOutMEM := MEM.io.InstructionSignalOut
+  EX.io.invalidInstructionOutMEM := MEM.io.invalidInstructionOut
 
   // WB to EX
   EX.io.MuxDataOutWB := WB.io.MuxDataOut
   EX.io.WBRegAddressOutWB := WB.io.WBRegAddressOut
   EX.io.ControlSignalsOutWB := WB.io.ControlSignalsOut
-  EX.io.InstructionSignalOutWB := WB.io.InstructionSignalOut
+  EX.io.invalidInstructionOutWB := WB.io.invalidInstructionOut
 
   // EX to IF
   IF.io.stall := EX.io.stall
+
+  IF.io.PCPlusOffsetIn := EX.io.PCPlusOffset
+  IF.io.ControlSignalsIn := EX.io.ControlSignalsOut
+  IF.io.shouldBranchIn := EX.io.shouldBranch
 
 }

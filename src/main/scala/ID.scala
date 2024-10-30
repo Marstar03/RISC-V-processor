@@ -27,8 +27,7 @@ class InstructionDecode extends MultiIOModule {
       val WBRegAddressIn = Input(UInt(5.W))
       val RegDataIn = Input(UInt(32.W))
       val ControlSignalsIn = Input(new ControlSignals)
-      val InstructionSignalOutWB = Input(new Instruction)
-      val InstructionSignalOutEX = Input(new Instruction)
+      val shouldBranch = Input(Bool())
 
       val PCOut = Output(UInt())
       val ControlSignals = Output(new ControlSignals)
@@ -44,8 +43,6 @@ class InstructionDecode extends MultiIOModule {
       // For forwarding. Need the instruction signal in the EX stage to get the address of the registers that are being read
       val ReadRegAddress1 = Output(UInt(5.W))
       val ReadRegAddress2 = Output(UInt(5.W))
-      val InstructionSignalOut = Output(new Instruction)
-      val isNop = Output(Bool())
     }
   )
 
@@ -79,50 +76,34 @@ class InstructionDecode extends MultiIOModule {
   io.op2Select := decoder.op2Select
   io.ALUop := decoder.ALUop
 
-  // Sjekker om instruksjonen i EX er en nop
-  val isNOPID = (io.InstructionSignal.instruction === "h00000013".U)
-
-  val isNOPWB = (io.InstructionSignalOutWB.instruction === "h00000013".U)
-
-  val isNOPEX = (io.InstructionSignalOutEX.instruction === "h00000013".U)
-
-  io.isNop := isNOPWB
-  // val nopReg = RegInit(0.U.asTypeOf(new Bool))
-  // nopReg := isNOPWB
-
   //Forwarding for readAddress1
-  when((io.InstructionSignal.registerRs1 === io.WBRegAddressIn) && (io.ControlSignalsIn.regWrite)) {
+  when((io.InstructionSignal.registerRs1 === io.WBRegAddressIn) && (io.ControlSignalsIn.regWrite) && (io.WBRegAddressIn =/= 0.U)) {
     io.RegA := io.RegDataIn
   } .otherwise {
     io.RegA := registers.io.readData1
   }
-  //io.RegA := registers.io.readData1
 
   //Forwarding for readAddress2
-  when((io.InstructionSignal.registerRs2 === io.WBRegAddressIn) && (io.ControlSignalsIn.regWrite)) {
+  when((io.InstructionSignal.registerRs2 === io.WBRegAddressIn) && (io.ControlSignalsIn.regWrite) && (io.WBRegAddressIn =/= 0.U)) {
     io.RegB := io.RegDataIn
   } .otherwise {
     io.RegB := registers.io.readData2
   }
 
-  //io.RegB := registers.io.readData2
-
   //io.RegA := registers.io.readData1
   //io.RegB := registers.io.readData2
+
   io.WBRegAddress := io.InstructionSignal.registerRd
   io.PCOut := io.PCIn
 
   io.ReadRegAddress1 := io.InstructionSignal.registerRs1
   io.ReadRegAddress2 := io.InstructionSignal.registerRs2
-  io.InstructionSignalOut := io.InstructionSignal
-
   
   // finding the right type of immediate format to use, and sign extending it
   // Utvider 12 bit integer til 32 bits ved å duplisere bit 11, altså sign-bit 20 ganger, og legge til de opprinnelige bit-ene
   io.Immediate := MuxLookup(decoder.immType, 0.S, Seq(
     ImmFormat.ITYPE -> Cat(Fill(20, io.InstructionSignal.immediateIType(11)), io.InstructionSignal.immediateIType).asSInt,
     ImmFormat.STYPE -> Cat(Fill(20, io.InstructionSignal.immediateSType(11)), io.InstructionSignal.immediateSType).asSInt,
-    //ImmFormat.UTYPE -> Cat(Fill(20, 0.U), io.InstructionSignal.immediateUType) // må fikse denne for at LUI skal funke
     ImmFormat.UTYPE -> Cat(io.InstructionSignal.immediateUType(31, 12), 0.U(12.W)).asSInt, // U-Type upper 20 bits, lower 12 are zeroed
     ImmFormat.JTYPE -> Cat(Fill(12, io.InstructionSignal.immediateJType(19)), io.InstructionSignal.immediateJType).asSInt,
     ImmFormat.BTYPE -> Cat(Fill(20, io.InstructionSignal.immediateBType(11)), io.InstructionSignal.immediateBType).asSInt

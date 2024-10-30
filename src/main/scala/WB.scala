@@ -12,12 +12,12 @@ class WriteBack() extends MultiIOModule {
       val ALUIn = Input(UInt(32.W))
       val MemDataIn = Input(UInt(32.W))
       val WBRegAddressIn = Input(UInt(5.W))
-      val InstructionSignalIn = Input(new Instruction)
+      val invalidInstructionIn = Input(Bool())
 
       val ControlSignalsOut = Output(new ControlSignals)
       val MuxDataOut = Output(UInt(32.W))
       val WBRegAddressOut = Output(UInt(5.W))
-      val InstructionSignalOut = Output(new Instruction)
+      val invalidInstructionOut = Output(Bool())
     })
 
   val MUX = Module(new MyMux).io // mux for å velge mellom ALUIn og MemDataIn til register WB data
@@ -29,6 +29,6 @@ class WriteBack() extends MultiIOModule {
   io.ControlSignalsOut := io.ControlSignalsIn
   io.MuxDataOut := MUX.out
   io.WBRegAddressOut := io.WBRegAddressIn
-  io.InstructionSignalOut := io.InstructionSignalIn
+  io.invalidInstructionOut := io.invalidInstructionIn
 
 }

@@ -45,3 +45,14 @@ class Mux3 extends Module {
 
   io.out := Mux(io.sel === 0.U, io.in0, Mux(io.sel === 1.U, io.in1, io.in2))
 }
+
+class CSMUX extends Module {
+  val io = IO(new Bundle {
+    val in0 = Input(new ControlSignals)
+    val in1 = Input(new ControlSignals)
+    val sel = Input(Bool())
+    val out = Output(new ControlSignals)
+  })
+
+  io.out := Mux(io.sel, io.in1, io.in0)
+}

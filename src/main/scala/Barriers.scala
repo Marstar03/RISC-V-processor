@@ -10,6 +10,7 @@ class IFBarrier() extends Module {
       val InstructionIn = Input(new Instruction)
       val PCIn = Input(UInt())
       val stall = Input(Bool())
+      val shouldBranch = Input(Bool())
 
       val InstructionOut = Output(new Instruction)
       val PCOut = Output(UInt())
@@ -22,10 +23,13 @@ class IFBarrier() extends Module {
 
   StallPrevReg := io.stall
 
-  InstructionBarrierReg := io.InstructionIn  
+  InstructionBarrierReg := io.InstructionIn
+
+  when (!io.stall) {
+    barrierReg := io.PCIn
+  }
 
   when (!StallPrevReg) {
-    barrierReg := io.PCIn
     io.InstructionOut := io.InstructionIn
   } .otherwise {
     io.InstructionOut := InstructionBarrierReg
@@ -51,11 +55,13 @@ class IDBarrier() extends Module {
       val ImmediateIn = Input(SInt(32.W))
       val WBRegAddressIn = Input(UInt(5.W))
 
-      // For forwarding
+      // For forwarding/branching
       val ReadRegAddress1In = Input(UInt(5.W))
       val ReadRegAddress2In = Input(UInt(5.W))
       val stall = Input(Bool())
-      val InstructionSignalIn = Input(new Instruction)
+      //val shouldBranch = Input(Bool())
+      val isBranching = Input(Bool())
+      val PCPlusOffsetEX = Input(UInt())
 
       val PCOut = Output(UInt())
       val ControlSignalsOut = Output(new ControlSignals)
@@ -71,7 +77,9 @@ class IDBarrier() extends Module {
       // For forwarding
       val ReadRegAddress1Out = Output(UInt(5.W))
       val ReadRegAddress2Out = Output(UInt(5.W))
-      val InstructionSignalOut = Output(new Instruction)
+
+      // Signal fra IDBarrier direkte til EXBarrier
+      val EXShouldNOPCS = Output(Bool())
     }
   )
 
@@ -87,14 +95,15 @@ class IDBarrier() extends Module {
   val WBRegAddressBarrierReg = RegInit(0.U(32.W))
   val ReadRegAddress1BarrierReg = RegInit(0.U(32.W))
   val ReadRegAddress2BarrierReg = RegInit(0.U(32.W))
-  val InstructionSignalBarrierReg = RegInit(0.U.asTypeOf(new Instruction))
 
   //val stallReg = RegInit(0.U.asTypeOf(new Bool))
 
   // Hvis EX har stall signal, vil vi ta inn 
   //stallReg := io.stall
 
-  when (!io.stall) {
+  // TODO: må ta inn pcplusoffset signalet i EX som input og sammenligne med io.PCIn her
+  when ((!io.stall) && ((io.PCIn === io.PCPlusOffsetEX) || (!io.isBranching))) {
+  //when (!io.stall) {
     PCBarrierReg := io.PCIn
     ControlSignalsBarrierReg := io.ControlSignalsIn
     branchTypeBarrierReg := io.branchTypeIn
@@ -107,9 +116,10 @@ class IDBarrier() extends Module {
     WBRegAddressBarrierReg := io.WBRegAddressIn
     ReadRegAddress1BarrierReg := io.ReadRegAddress1In
     ReadRegAddress2BarrierReg := io.ReadRegAddress2In
-    InstructionSignalBarrierReg := io.InstructionSignalIn
 
-  }
+  } 
+
+  io.EXShouldNOPCS := ((io.PCIn =/= io.PCPlusOffsetEX) && (io.isBranching))
 
   io.PCOut := PCBarrierReg
 
@@ -135,7 +145,6 @@ class IDBarrier() extends Module {
   io.ReadRegAddress1Out := ReadRegAddress1BarrierReg
 
   io.ReadRegAddress2Out := ReadRegAddress2BarrierReg
-  io.InstructionSignalOut := InstructionSignalBarrierReg
 
 }
 
@@ -150,9 +159,11 @@ class EXBarrier() extends Module {
       val WBRegAddressIn = Input(UInt(5.W))
       val shouldBranchIn = Input(Bool())
 
+      // Signal fra IDBarrier direkte til EXBarrier
+      val EXShouldNOPCS = Input(Bool())
+
       // For forwarding
       val stall = Input(Bool())
-      val InstructionSignalIn = Input(new Instruction)
 
       val PCPlusOffsetOut = Output(UInt())
       val ControlSignalsOut = Output(new ControlSignals)
@@ -160,7 +171,7 @@ class EXBarrier() extends Module {
       val RegBOut = Output(UInt(32.W))
       val WBRegAddressOut = Output(UInt(5.W))
       val shouldBranchOut = Output(Bool())
-      val InstructionSignalOut = Output(new Instruction)
+      val invalidInstruction = Output(Bool())
     }
   )
 
@@ -170,7 +181,7 @@ class EXBarrier() extends Module {
   val RegBBarrierReg = RegInit(0.U(32.W))
   val WBRegAddressBarrierReg = RegInit(0.U(32.W))
   val shouldBranchBarrierReg = RegInit(0.U.asTypeOf(new Bool))
-  val InstructionSignalBarrierReg = RegInit(0.U.asTypeOf(new Instruction))
+  val invalidInstructionBarrierReg = RegInit(false.B)
 
   //val stallReg = RegInit(0.U.asTypeOf(new Bool))
 
@@ -184,12 +195,14 @@ class EXBarrier() extends Module {
   RegBBarrierReg := io.RegBIn
   WBRegAddressBarrierReg := io.WBRegAddressIn
   shouldBranchBarrierReg := io.shouldBranchIn
-  InstructionSignalBarrierReg := io.InstructionSignalIn
 
-  when (!io.stall) {
+  when (!io.stall && !io.EXShouldNOPCS) {
     ControlSignalsBarrierReg := io.ControlSignalsIn
+    invalidInstructionBarrierReg := false.B
   } .otherwise {
+    // lagt inn slik at også wb adressen blir nullet ut slik at vi ikke forwarder i dette tilfellet
     ControlSignalsBarrierReg := ControlSignals.nop
+    invalidInstructionBarrierReg := true.B
   }
   io.PCPlusOffsetOut := PCPlusOffsetBarrierReg
 
@@ -202,7 +215,7 @@ class EXBarrier() extends Module {
   io.WBRegAddressOut := WBRegAddressBarrierReg
 
   io.shouldBranchOut := shouldBranchBarrierReg
-  io.InstructionSignalOut := InstructionSignalBarrierReg
+  io.invalidInstruction := invalidInstructionBarrierReg
 }
 
 class MEMBarrier() extends Module {
@@ -216,32 +229,28 @@ class MEMBarrier() extends Module {
 
       // For forwarding
       //val stall = Input(Bool())
-      val InstructionSignalIn = Input(new Instruction)
+      val invalidInstructionIn = Input(Bool())
 
       val ControlSignalsOut = Output(new ControlSignals)
       val ALUOut = Output(UInt(32.W))
       val MemDataOut = Output(UInt(32.W))
       val WBRegAddressOut = Output(UInt(5.W))
-      val InstructionSignalOut = Output(new Instruction)
+      val invalidInstructionOut = Output(Bool())
     }
   )
 
   val ControlSignalsBarrierReg = RegInit(0.U.asTypeOf(new ControlSignals))
   val ALUBarrierReg = RegInit(0.U(32.W))
   val WBRegAddressBarrierReg = RegInit(0.U(32.W))
-  val InstructionSignalBarrierReg = RegInit(0.U.asTypeOf(new Instruction))
+  val invalidInstructionBarrierReg = RegInit(false.B)
 
   //val stallReg = RegInit(0.U.asTypeOf(new Bool))
   //stallReg := io.stall
 
-
-  //when (!stallReg) {
   ControlSignalsBarrierReg := io.ControlSignalsIn
   ALUBarrierReg := io.ALUIn
   WBRegAddressBarrierReg := io.WBRegAddressIn
-  InstructionSignalBarrierReg := io.InstructionSignalIn
-
-  //}
+  invalidInstructionBarrierReg := io.invalidInstructionIn
 
   io.ControlSignalsOut := ControlSignalsBarrierReg
 
@@ -250,5 +259,5 @@ class MEMBarrier() extends Module {
   io.MemDataOut := io.MemDataIn
   
   io.WBRegAddressOut := WBRegAddressBarrierReg
-  io.InstructionSignalOut := InstructionSignalBarrierReg
+  io.invalidInstructionOut := invalidInstructionBarrierReg
 }
