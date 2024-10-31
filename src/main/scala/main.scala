@@ -2,6 +2,6 @@ package FiveStage
 
 object main {
   def main(args: Array[String]): Unit = {
-    println("helo")
+    chisel3.Driver.execute(Array("--target-dir", "verilog"), () => new Tile())
   }
 }
