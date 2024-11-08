@@ -9,7 +9,7 @@ class Execute extends MultiIOModule {
 
   val io = IO(
     new Bundle {
-      val PCIn = Input(UInt()) // burde kanskje sette til 32 bits?
+      val PCIn = Input(UInt())
       val ControlSignalsIn = Input(new ControlSignals)
       val branchType = Input(UInt(3.W))
       val op1Select = Input(UInt(1.W))
@@ -18,7 +18,7 @@ class Execute extends MultiIOModule {
       val RegA = Input(UInt(32.W))
       val RegB = Input(UInt(32.W))
       val Immediate = Input(SInt(32.W))
-      val WBRegAddressIn = Input(UInt(5.W)) // Adressen til registeret vi vil skrive tilbake til (bit 11 til 7)
+      val WBRegAddressIn = Input(UInt(5.W))
 
       // For forwarding
       val ALUOutMEM = Input(UInt(32.W))
@@ -34,16 +34,14 @@ class Execute extends MultiIOModule {
       val invalidInstructionOutMEM = Input(Bool())
       val invalidInstructionOutWB = Input(Bool())
 
-      val PCPlusOffset = Output(UInt()) // PC pluss immediate verdi for branching
+      val PCPlusOffset = Output(UInt())
       val ControlSignalsOut = Output(new ControlSignals)
       val ALUOut = Output(UInt(32.W))
       val RegBOut = Output(UInt(32.W))
       val WBRegAddressOut = Output(UInt(5.W))
       val shouldBranch = Output(Bool())
       val isBranching = Output(Bool())
-
       val BranchDestination = Output(UInt())
-
       // For forwarding
       val stall = Output(Bool())
     }
@@ -65,10 +63,7 @@ class Execute extends MultiIOModule {
   val MuxDataOutWBPrevAddr = RegInit(0.U(5.W))
   val invalidInstructionWBPrev = RegInit(false.B)
 
-  forwardingUnit1.in0 := io.RegA
-  forwardingUnit1.in1 := io.MuxDataOutWB
-  forwardingUnit1.in2 := io.ALUOutMEM
-
+  // unit for checking if any of the read registers are currently being fetched from memory. If so, the stall signal is high, making the IF, ID and EX stages stall
   val hazardDetectionUnit = Module(new HazardDetectionUnit)
 
   hazardDetectionUnit.io.RegWriteMEM := io.ControlSignalsOutMEM.regWrite
@@ -79,15 +74,15 @@ class Execute extends MultiIOModule {
 
   io.stall := hazardDetectionUnit.io.stall
 
-  val StallPrevReg = RegInit(false.B)
-
-  StallPrevReg := io.stall
 
   MuxDataOutWBPrev := io.MuxDataOutWB
   MuxDataOutWBPrevAddr := io.WBRegAddressOutWB
   invalidInstructionWBPrev := io.invalidInstructionOutWB
 
   // må legge til som condition at vi kun forwarder dersom denne instruksjonen ikke er en nop
+  forwardingUnit1.in0 := io.RegA
+  forwardingUnit1.in1 := io.MuxDataOutWB
+  forwardingUnit1.in2 := io.ALUOutMEM
 
   when (((io.ReadRegAddress1 =/= io.WBRegAddressOutMEM) || (io.invalidInstructionOutMEM) || (io.WBRegAddressOutMEM === 0.U) || (!io.ControlSignalsOutMEM.regWrite)) && 
   ((io.ReadRegAddress1 =/= io.WBRegAddressOutWB) || (io.invalidInstructionOutWB) || (io.WBRegAddressOutWB === 0.U) || (!io.ControlSignalsOutWB.regWrite))) {
@@ -101,17 +96,20 @@ class Execute extends MultiIOModule {
     forwardingUnit1.sel := 3.U
   }
 
+  val StallPrevReg = RegInit(false.B)
+
+  StallPrevReg := io.stall
+
   // mux to choose between forwardingUnit1.out and PC for the ALU op1
+  // If we forwarded register 1 from WB, but we had stall, we now forward the previous WB value. If not, we forward as normal
   when ((StallPrevReg) && (forwardingUnit1.sel === 0.U) && (io.ReadRegAddress1 === MuxDataOutWBPrevAddr) && (!invalidInstructionWBPrev) && (MuxDataOutWBPrevAddr =/= 0.U)) {
     op1MUX.in0 := MuxDataOutWBPrev
   } .otherwise {
     op1MUX.in0 := forwardingUnit1.out
   }
 
-  //op1MUX.in0 := forwardingUnit1.out
   op1MUX.in1 := io.PCIn
   op1MUX.sel := io.op1Select
-
 
   forwardingUnit2.in0 := io.RegB
   forwardingUnit2.in1 := io.MuxDataOutWB
@@ -130,15 +128,18 @@ class Execute extends MultiIOModule {
   }
 
   // mux to choose between forwardingUnit2.out and the immediate for the ALU op 2
+
+  // If we forwarded register 2 from WB, but we had stall, we now forward the previous WB value. If not, we forward as normal
   when ((StallPrevReg) && (forwardingUnit2.sel === 0.U) && (io.ReadRegAddress2 === MuxDataOutWBPrevAddr) && (!invalidInstructionWBPrev) && (MuxDataOutWBPrevAddr =/= 0.U)) {
     op2MUX.in0 := MuxDataOutWBPrev
   } .otherwise {
     op2MUX.in0 := forwardingUnit2.out
   }
-  //op2MUX.in0 := forwardingUnit2.out
+
   op2MUX.in1 := io.Immediate.asUInt
   op2MUX.sel := io.op2Select
   
+  // inputting signals to the ALU
   ALU.op1 := op1MUX.out
   ALU.op2 := op2MUX.out
   ALU.aluOp := io.ALUop
@@ -150,30 +151,25 @@ class Execute extends MultiIOModule {
 
   io.ALUOut := pcplus4MUX.out
 
-  // mux to choose between PC and RegA for adding with the immediate
+  // mux to choose between PC and register 1 for adding with the immediate
   jumpMUX.in0 := io.PCIn
   jumpMUX.in1 := forwardingUnit1.out
   jumpMUX.sel := (io.branchType === branchType.jumpReg)
   
-  // adder component which adds the output of jumpMUX (regA or pc) with the immediate
+  // adder component which adds the output of jumpMUX (register 1 / PC) with the immediate
   Adder.in0 := jumpMUX.out.asSInt
   Adder.in1 := io.Immediate
 
-  // when (jumpMUX.sel) {
-  //   // sets the least significant bit to 0 if we add with regA value
-  //   io.PCPlusOffset := Adder.out.asUInt & "hfffffffe".U
-  // } .otherwise {
-  //   // if just adding with pc we dont do anything
-  //   io.PCPlusOffset := Adder.out.asUInt
-  // }
 
-  // signals that we keep to the mem stage
+  io.RegBOut := forwardingUnit2.out // passing register 2 value to MEM for use in store-instruction
+
+  // passing remaining signals to next stage
   io.ControlSignalsOut := io.ControlSignalsIn
-  io.RegBOut := forwardingUnit2.out
   io.WBRegAddressOut := io.WBRegAddressIn
 
   val PreviousPCIn = RegInit(0.U(32.W))
 
+  // storing previous PC address for use in shouldBranch and allBranch signals
   when (!hazardDetectionUnit.io.stall) {
     PreviousPCIn := io.PCIn
   } .otherwise {
@@ -181,8 +177,6 @@ class Execute extends MultiIOModule {
   }
 
   val BranchDestinationReg = RegInit(0.U(32.W))
-
-
 
   // shouldbranch is a signal that is true if any of the conditions for branch/jump is satisfied
   // so it decides if we should use the pcplusoffset signal for addressing the next instruction
@@ -209,19 +203,11 @@ class Execute extends MultiIOModule {
                   (io.PCIn =/= PreviousPCIn)
 
 
-  
-
   when (AllBranching) {
     BranchDestinationReg := io.PCPlusOffset
   }
 
-  // when (io.shouldBranch) {
-  //   BranchDestinationReg := io.PCPlusOffset
-  // }
-
   io.BranchDestination := BranchDestinationReg
-
-
 
   io.isBranching := (io.ControlSignalsIn.jump || 
                   ((io.branchType === branchType.beq) && (ALU.aluResult === 0.U)) || 
@@ -231,7 +217,9 @@ class Execute extends MultiIOModule {
                   ((io.branchType === branchType.ltu) && (ALU.aluResult === 1.U)) ||
                   ((io.branchType === branchType.gteu) && (ALU.aluResult === 0.U)))
 
+  // configuration such that the branching address stays the same while we are waiting for the instruction at the target branch address
   when (io.isBranching && (!AllBranching)) {
+    // if we have waited for at least one cycle, we use the register to keep same branch address and not get affected by forwarding
     io.PCPlusOffset := BranchDestinationReg
 
   } .otherwise {
