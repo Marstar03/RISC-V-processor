@@ -135,41 +135,33 @@ class EXBarrier() extends Module {
 
   val io = IO(
     new Bundle {
-      val PCPlusOffsetIn = Input(UInt())
       val ControlSignalsIn = Input(new ControlSignals)
       val ALUIn = Input(UInt(32.W))
       val RegBIn = Input(UInt(32.W))
       val WBRegAddressIn = Input(UInt(5.W))
-      val shouldBranchIn = Input(Bool())
       // signal from IDBarrier directly to EXBarrier
       val EXShouldNOPCS = Input(Bool())
       // For forwarding
       val stall = Input(Bool())
 
-      val PCPlusOffsetOut = Output(UInt())
       val ControlSignalsOut = Output(new ControlSignals)
       val ALUOut = Output(UInt(32.W))
       val RegBOut = Output(UInt(32.W))
       val WBRegAddressOut = Output(UInt(5.W))
-      val shouldBranchOut = Output(Bool())
       val invalidInstruction = Output(Bool())
     }
   )
 
-  val PCPlusOffsetBarrierReg = RegInit(0.U(32.W))
   val ControlSignalsBarrierReg = RegInit(0.U.asTypeOf(new ControlSignals))
   val ALUBarrierReg = RegInit(0.U(32.W))
   val RegBBarrierReg = RegInit(0.U(32.W))
   val WBRegAddressBarrierReg = RegInit(0.U(32.W))
-  val shouldBranchBarrierReg = RegInit(0.U.asTypeOf(new Bool))
   val invalidInstructionBarrierReg = RegInit(false.B)
 
   // passing EX signals to barrier registers
-  PCPlusOffsetBarrierReg := io.PCPlusOffsetIn
   ALUBarrierReg := io.ALUIn
   RegBBarrierReg := io.RegBIn
   WBRegAddressBarrierReg := io.WBRegAddressIn
-  shouldBranchBarrierReg := io.shouldBranchIn
 
   // if we are stalling the EX stage, we input the instruction from EX, but in order for it not no execute more than once,
   // we set the instruction as invalid and nop the control signals
@@ -182,12 +174,10 @@ class EXBarrier() extends Module {
   }
 
   // passing register values to MEM stage
-  io.PCPlusOffsetOut := PCPlusOffsetBarrierReg
   io.ControlSignalsOut := ControlSignalsBarrierReg
   io.ALUOut := ALUBarrierReg
   io.RegBOut := RegBBarrierReg
   io.WBRegAddressOut := WBRegAddressBarrierReg
-  io.shouldBranchOut := shouldBranchBarrierReg
   io.invalidInstruction := invalidInstructionBarrierReg
 }
 

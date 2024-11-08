@@ -24,13 +24,10 @@ class InstructionFetch extends MultiIOModule {
   val io = IO(
     new Bundle {
       val PCPlusOffsetEX = Input(UInt())
-      val ControlSignalsEX = Input(new ControlSignals)
       val shouldBranchEX = Input(Bool())
       val isBranchingEX = Input(Bool())
       val PCPlusOffsetID = Input(UInt())
-      val ControlSignalsID = Input(new ControlSignals)
       val shouldBranchID = Input(Bool())
-      val PCOutID = Input(UInt())
       val stall = Input(Bool())
 
       val PC = Output(UInt())

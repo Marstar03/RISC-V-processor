@@ -27,7 +27,6 @@ class InstructionDecode extends MultiIOModule {
       val WBRegAddressIn = Input(UInt(5.W))
       val RegDataIn = Input(UInt(32.W))
       val ControlSignalsIn = Input(new ControlSignals)
-      val shouldBranch = Input(Bool())
 
       // for fast branch handling
       val WBRegAddressEX = Input(UInt(5.W))

@@ -97,22 +97,18 @@ class CPU extends MultiIOModule {
   EX.io.ReadRegAddress2 := IDBarrier.io.ReadRegAddress2Out
 
   // EXBarrier signals
-  EXBarrier.io.PCPlusOffsetIn := EX.io.PCPlusOffset
   EXBarrier.io.ControlSignalsIn := EX.io.ControlSignalsOut
   EXBarrier.io.ALUIn := EX.io.ALUOut
   EXBarrier.io.RegBIn := EX.io.RegBOut
   EXBarrier.io.WBRegAddressIn := EX.io.WBRegAddressOut
-  EXBarrier.io.shouldBranchIn := EX.io.shouldBranch
   EXBarrier.io.stall := EX.io.stall
 
   EXBarrier.io.EXShouldNOPCS := IDBarrier.io.EXShouldNOPCS
 
-  MEM.io.PCPlusOffsetIn := EXBarrier.io.PCPlusOffsetOut
   MEM.io.ControlSignalsIn := EXBarrier.io.ControlSignalsOut
   MEM.io.ALUIn := EXBarrier.io.ALUOut
   MEM.io.RegB := EXBarrier.io.RegBOut
   MEM.io.WBRegAddressIn := EXBarrier.io.WBRegAddressOut
-  MEM.io.shouldBranchIn := EXBarrier.io.shouldBranchOut
   MEM.io.invalidInstructionIn := EXBarrier.io.invalidInstruction
 
   // MEMBarrier signals
@@ -136,7 +132,6 @@ class CPU extends MultiIOModule {
   ID.io.ControlSignalsEX := EX.io.ControlSignalsOut
 
   // MEM to ID
-  ID.io.shouldBranch := MEM.io.shouldBranchOut
   ID.io.WBRegAddressMEM := MEM.io.WBRegAddressOut
   ID.io.ALUOutMEM := MEM.io.ALUOut
   ID.io.ControlSignalsMEM := MEM.io.ControlSignalsOut
@@ -150,8 +145,6 @@ class CPU extends MultiIOModule {
   EX.io.ALUOutMEM := MEM.io.ALUOut
   EX.io.WBRegAddressOutMEM := MEM.io.WBRegAddressOut
   EX.io.ControlSignalsOutMEM := MEM.io.ControlSignalsOut
-  EX.io.ControlSignalsPrevMEM := MEM.io.ControlSignalsPrev
-  EX.io.MemDataMEM := MEM.io.MemData
   EX.io.invalidInstructionOutMEM := MEM.io.invalidInstructionOut
 
   // WB to EX
@@ -163,14 +156,11 @@ class CPU extends MultiIOModule {
   // EX to IF
   IF.io.stall := EX.io.stall
   IF.io.PCPlusOffsetEX := EX.io.PCPlusOffset
-  IF.io.ControlSignalsEX := EX.io.ControlSignalsOut
   IF.io.shouldBranchEX := EX.io.shouldBranch
   IF.io.isBranchingEX := EX.io.isBranching
 
   // ID to IF
   IF.io.PCPlusOffsetID := ID.io.PCPlusOffsetFast
-  IF.io.ControlSignalsID := ID.io.ControlSignals
   IF.io.shouldBranchID := ID.io.shouldBranchFast
-  IF.io.PCOutID := ID.io.PCOut
 
 }

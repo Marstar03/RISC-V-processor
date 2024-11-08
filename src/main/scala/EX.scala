@@ -28,8 +28,6 @@ class Execute extends MultiIOModule {
       val ReadRegAddress1 = Input(UInt(5.W))
       val ReadRegAddress2 = Input(UInt(5.W))
       val ControlSignalsOutMEM = Input(new ControlSignals)
-      val ControlSignalsPrevMEM = Input(new ControlSignals)
-      val MemDataMEM = Input(UInt(32.W))
       val ControlSignalsOutWB = Input(new ControlSignals)
       val invalidInstructionOutMEM = Input(Bool())
       val invalidInstructionOutWB = Input(Bool())
