@@ -42,6 +42,8 @@ class Execute extends MultiIOModule {
       val shouldBranch = Output(Bool())
       val isBranching = Output(Bool())
 
+      val BranchDestination = Output(UInt())
+
       // For forwarding
       val stall = Output(Bool())
     }
@@ -157,13 +159,13 @@ class Execute extends MultiIOModule {
   Adder.in0 := jumpMUX.out.asSInt
   Adder.in1 := io.Immediate
 
-  when (jumpMUX.sel) {
-    // sets the least significant bit to 0 if we add with regA value
-    io.PCPlusOffset := Adder.out.asUInt & "hfffffffe".U
-  } .otherwise {
-    // if just adding with pc we dont do anything
-    io.PCPlusOffset := Adder.out.asUInt
-  }
+  // when (jumpMUX.sel) {
+  //   // sets the least significant bit to 0 if we add with regA value
+  //   io.PCPlusOffset := Adder.out.asUInt & "hfffffffe".U
+  // } .otherwise {
+  //   // if just adding with pc we dont do anything
+  //   io.PCPlusOffset := Adder.out.asUInt
+  // }
 
   // signals that we keep to the mem stage
   io.ControlSignalsOut := io.ControlSignalsIn
@@ -178,9 +180,26 @@ class Execute extends MultiIOModule {
     PreviousPCIn := 0.U
   }
 
+  val BranchDestinationReg = RegInit(0.U(32.W))
+
+
+
   // shouldbranch is a signal that is true if any of the conditions for branch/jump is satisfied
   // so it decides if we should use the pcplusoffset signal for addressing the next instruction
   io.shouldBranch := (io.ControlSignalsIn.jump || 
+                  ((io.branchType === branchType.beq) && (ALU.aluResult === 0.U) && (io.ControlSignalsOutMEM.memRead || io.ControlSignalsOutWB.memRead)) || 
+                  ((io.branchType === branchType.neq) && (ALU.aluResult =/= 0.U) && (io.ControlSignalsOutMEM.memRead || io.ControlSignalsOutWB.memRead)) ||
+                  // ((io.branchType === branchType.beq) && (ALU.aluResult === 0.U)) || 
+                  // ((io.branchType === branchType.neq) && (ALU.aluResult =/= 0.U)) ||
+                  ((io.branchType === branchType.lt) && (ALU.aluResult === 1.U)) ||
+                  ((io.branchType === branchType.gte) && (ALU.aluResult === 0.U)) ||
+                  ((io.branchType === branchType.ltu) && (ALU.aluResult === 1.U)) ||
+                  ((io.branchType === branchType.gteu) && (ALU.aluResult === 0.U))) &&
+                  (io.PCIn =/= PreviousPCIn)
+
+  val AllBranching = Wire(new Bool)
+
+  AllBranching := (io.ControlSignalsIn.jump || 
                   ((io.branchType === branchType.beq) && (ALU.aluResult === 0.U)) || 
                   ((io.branchType === branchType.neq) && (ALU.aluResult =/= 0.U)) ||
                   ((io.branchType === branchType.lt) && (ALU.aluResult === 1.U)) ||
@@ -189,6 +208,21 @@ class Execute extends MultiIOModule {
                   ((io.branchType === branchType.gteu) && (ALU.aluResult === 0.U))) &&
                   (io.PCIn =/= PreviousPCIn)
 
+
+  
+
+  when (AllBranching) {
+    BranchDestinationReg := io.PCPlusOffset
+  }
+
+  // when (io.shouldBranch) {
+  //   BranchDestinationReg := io.PCPlusOffset
+  // }
+
+  io.BranchDestination := BranchDestinationReg
+
+
+
   io.isBranching := (io.ControlSignalsIn.jump || 
                   ((io.branchType === branchType.beq) && (ALU.aluResult === 0.U)) || 
                   ((io.branchType === branchType.neq) && (ALU.aluResult =/= 0.U)) ||
@@ -196,5 +230,18 @@ class Execute extends MultiIOModule {
                   ((io.branchType === branchType.gte) && (ALU.aluResult === 0.U)) ||
                   ((io.branchType === branchType.ltu) && (ALU.aluResult === 1.U)) ||
                   ((io.branchType === branchType.gteu) && (ALU.aluResult === 0.U)))
+
+  when (io.isBranching && (!AllBranching)) {
+    io.PCPlusOffset := BranchDestinationReg
+
+  } .otherwise {
+    when (jumpMUX.sel) {
+      // sets the least significant bit to 0 if we add with regA value
+      io.PCPlusOffset := Adder.out.asUInt & "hfffffffe".U
+    } .otherwise {
+      // if just adding with pc we dont do anything
+      io.PCPlusOffset := Adder.out.asUInt
+    }
+  }
 
 }

@@ -80,6 +80,7 @@ class CPU extends MultiIOModule {
   IDBarrier.io.ReadRegAddress2In := ID.io.ReadRegAddress2
   IDBarrier.io.stall := EX.io.stall
   IDBarrier.io.PCPlusOffsetEX := EX.io.PCPlusOffset
+  IDBarrier.io.BranchDestinationEX := EX.io.BranchDestination
   IDBarrier.io.isBranching := EX.io.isBranching
 
   EX.io.PCIn := IDBarrier.io.PCOut
@@ -130,8 +131,16 @@ class CPU extends MultiIOModule {
 
   // Rest of signals
 
+  // EX to ID
+  ID.io.WBRegAddressEX := EX.io.WBRegAddressOut
+  ID.io.ALUOutEX := EX.io.ALUOut
+  ID.io.ControlSignalsEX := EX.io.ControlSignalsOut
+
   // MEM to ID
   ID.io.shouldBranch := MEM.io.shouldBranchOut
+  ID.io.WBRegAddressMEM := MEM.io.WBRegAddressOut
+  ID.io.ALUOutMEM := MEM.io.ALUOut
+  ID.io.ControlSignalsMEM := MEM.io.ControlSignalsOut
 
   // WB to ID
   ID.io.WBRegAddressIn := WB.io.WBRegAddressOut
@@ -157,8 +166,15 @@ class CPU extends MultiIOModule {
   // EX to IF
   IF.io.stall := EX.io.stall
 
-  IF.io.PCPlusOffsetIn := EX.io.PCPlusOffset
-  IF.io.ControlSignalsIn := EX.io.ControlSignalsOut
-  IF.io.shouldBranchIn := EX.io.shouldBranch
+  IF.io.PCPlusOffsetEX := EX.io.PCPlusOffset
+  IF.io.ControlSignalsEX := EX.io.ControlSignalsOut
+  IF.io.shouldBranchEX := EX.io.shouldBranch
+  IF.io.isBranchingEX := EX.io.isBranching
+
+  // ID to IF
+  IF.io.PCPlusOffsetID := ID.io.PCPlusOffsetFast
+  IF.io.ControlSignalsID := ID.io.ControlSignals
+  IF.io.shouldBranchID := ID.io.shouldBranchFast
+  IF.io.PCOutID := ID.io.PCOut
 
 }

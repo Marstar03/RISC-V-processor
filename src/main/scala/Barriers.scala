@@ -62,6 +62,7 @@ class IDBarrier() extends Module {
       //val shouldBranch = Input(Bool())
       val isBranching = Input(Bool())
       val PCPlusOffsetEX = Input(UInt())
+      val BranchDestinationEX = Input(UInt())
 
       val PCOut = Output(UInt())
       val ControlSignalsOut = Output(new ControlSignals)
@@ -102,6 +103,7 @@ class IDBarrier() extends Module {
   //stallReg := io.stall
 
   // TODO: må ta inn pcplusoffset signalet i EX som input og sammenligne med io.PCIn her
+  //when ((!io.stall) && ((io.PCIn === io.PCPlusOffsetEX) || (io.PCIn === io.BranchDestinationEX) || (!io.isBranching))) {
   when ((!io.stall) && ((io.PCIn === io.PCPlusOffsetEX) || (!io.isBranching))) {
   //when (!io.stall) {
     PCBarrierReg := io.PCIn
