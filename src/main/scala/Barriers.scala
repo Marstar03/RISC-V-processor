@@ -52,8 +52,8 @@ class IDBarrier() extends Module {
       val op1SelectIn = Input(UInt(1.W))
       val op2SelectIn = Input(UInt(1.W))
       val ALUopIn = Input(UInt(4.W))
-      val RegAIn = Input(UInt(32.W))
-      val RegBIn = Input(UInt(32.W))
+      val Reg1In = Input(UInt(32.W))
+      val Reg2In = Input(UInt(32.W))
       val ImmediateIn = Input(SInt(32.W))
       val WBRegAddressIn = Input(UInt(5.W))
       // For forwarding/branching
@@ -61,7 +61,7 @@ class IDBarrier() extends Module {
       val ReadRegAddress2In = Input(UInt(5.W))
       val stall = Input(Bool())
       val isBranching = Input(Bool())
-      val PCPlusOffsetEX = Input(UInt())
+      val BranchAddressEX = Input(UInt())
       val BranchDestinationEX = Input(UInt())
 
       val PCOut = Output(UInt())
@@ -70,8 +70,8 @@ class IDBarrier() extends Module {
       val op1SelectOut = Output(UInt(1.W))
       val op2SelectOut = Output(UInt(1.W))
       val ALUopOut = Output(UInt(4.W))
-      val RegAOut = Output(UInt(32.W))
-      val RegBOut = Output(UInt(32.W))
+      val Reg1Out = Output(UInt(32.W))
+      val Reg2Out = Output(UInt(32.W))
       val ImmediateOut = Output(SInt(32.W))
       val WBRegAddressOut = Output(UInt(5.W))
       // For forwarding
@@ -89,23 +89,23 @@ class IDBarrier() extends Module {
   val op1SelectBarrierReg = RegInit(0.U(1.W))
   val op2SelectBarrierReg = RegInit(0.U(1.W))
   val ALUopBarrierReg = RegInit(0.U(4.W))
-  val RegABarrierReg = RegInit(0.U(32.W))
-  val RegBBarrierReg = RegInit(0.U(32.W))
+  val Reg1BarrierReg = RegInit(0.U(32.W))
+  val Reg2BarrierReg = RegInit(0.U(32.W))
   val ImmediateBarrierReg = RegInit(0.S(32.W))
   val WBRegAddressBarrierReg = RegInit(0.U(32.W))
   val ReadRegAddress1BarrierReg = RegInit(0.U(32.W))
   val ReadRegAddress2BarrierReg = RegInit(0.U(32.W))
 
   // only updating barrier if no stall and we either are not branching or we have reached the branch target
-  when ((!io.stall) && ((io.PCIn === io.PCPlusOffsetEX) || (!io.isBranching))) {
+  when ((!io.stall) && ((io.PCIn === io.BranchAddressEX) || (!io.isBranching))) {
     PCBarrierReg := io.PCIn
     ControlSignalsBarrierReg := io.ControlSignalsIn
     branchTypeBarrierReg := io.branchTypeIn
     op1SelectBarrierReg := io.op1SelectIn
     op2SelectBarrierReg := io.op2SelectIn
     ALUopBarrierReg := io.ALUopIn
-    RegABarrierReg := io.RegAIn
-    RegBBarrierReg := io.RegBIn
+    Reg1BarrierReg := io.Reg1In
+    Reg2BarrierReg := io.Reg2In
     ImmediateBarrierReg := io.ImmediateIn
     WBRegAddressBarrierReg := io.WBRegAddressIn
     ReadRegAddress1BarrierReg := io.ReadRegAddress1In
@@ -114,15 +114,15 @@ class IDBarrier() extends Module {
   } 
 
   // passing register values to EX stage
-  io.EXShouldNOPCS := ((io.PCIn =/= io.PCPlusOffsetEX) && (io.isBranching))
+  io.EXShouldNOPCS := ((io.PCIn =/= io.BranchAddressEX) && (io.isBranching))
   io.PCOut := PCBarrierReg
   io.ControlSignalsOut := ControlSignalsBarrierReg
   io.branchTypeOut := branchTypeBarrierReg
   io.op1SelectOut := op1SelectBarrierReg
   io.op2SelectOut := op2SelectBarrierReg
   io.ALUopOut := ALUopBarrierReg
-  io.RegAOut := RegABarrierReg
-  io.RegBOut := RegBBarrierReg
+  io.Reg1Out := Reg1BarrierReg
+  io.Reg2Out := Reg2BarrierReg
   io.ImmediateOut := ImmediateBarrierReg
   io.WBRegAddressOut := WBRegAddressBarrierReg
   // For forwarding
@@ -137,7 +137,7 @@ class EXBarrier() extends Module {
     new Bundle {
       val ControlSignalsIn = Input(new ControlSignals)
       val ALUIn = Input(UInt(32.W))
-      val RegBIn = Input(UInt(32.W))
+      val Reg2In = Input(UInt(32.W))
       val WBRegAddressIn = Input(UInt(5.W))
       // signal from IDBarrier directly to EXBarrier
       val EXShouldNOPCS = Input(Bool())
@@ -146,7 +146,7 @@ class EXBarrier() extends Module {
 
       val ControlSignalsOut = Output(new ControlSignals)
       val ALUOut = Output(UInt(32.W))
-      val RegBOut = Output(UInt(32.W))
+      val Reg2Out = Output(UInt(32.W))
       val WBRegAddressOut = Output(UInt(5.W))
       val invalidInstruction = Output(Bool())
     }
@@ -154,13 +154,13 @@ class EXBarrier() extends Module {
 
   val ControlSignalsBarrierReg = RegInit(0.U.asTypeOf(new ControlSignals))
   val ALUBarrierReg = RegInit(0.U(32.W))
-  val RegBBarrierReg = RegInit(0.U(32.W))
+  val Reg2BarrierReg = RegInit(0.U(32.W))
   val WBRegAddressBarrierReg = RegInit(0.U(32.W))
   val invalidInstructionBarrierReg = RegInit(false.B)
 
   // passing EX signals to barrier registers
   ALUBarrierReg := io.ALUIn
-  RegBBarrierReg := io.RegBIn
+  Reg2BarrierReg := io.Reg2In
   WBRegAddressBarrierReg := io.WBRegAddressIn
 
   // if we are stalling the EX stage, we input the instruction from EX, but in order for it not no execute more than once,
@@ -176,7 +176,7 @@ class EXBarrier() extends Module {
   // passing register values to MEM stage
   io.ControlSignalsOut := ControlSignalsBarrierReg
   io.ALUOut := ALUBarrierReg
-  io.RegBOut := RegBBarrierReg
+  io.Reg2Out := Reg2BarrierReg
   io.WBRegAddressOut := WBRegAddressBarrierReg
   io.invalidInstruction := invalidInstructionBarrierReg
 }

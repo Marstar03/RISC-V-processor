@@ -23,10 +23,10 @@ class InstructionFetch extends MultiIOModule {
     */
   val io = IO(
     new Bundle {
-      val PCPlusOffsetEX = Input(UInt())
+      val BranchAddressEX = Input(UInt())
       val shouldBranchEX = Input(Bool())
       val isBranchingEX = Input(Bool())
-      val PCPlusOffsetID = Input(UInt())
+      val BranchAddressID = Input(UInt())
       val shouldBranchID = Input(Bool())
       val stall = Input(Bool())
 
@@ -36,8 +36,8 @@ class InstructionFetch extends MultiIOModule {
 
   val IMEM = Module(new IMEM)
   val PC   = RegInit(UInt(32.W), 0.U)
-  val InstrMUX = Module(new MyMux).io
-  val BranchFastMUX = Module(new MyMux).io 
+  val InstrMUX = Module(new MyMux).io // mux for choosing between PC and branching address
+  val BranchFastMUX = Module(new MyMux).io // mux for choosing between the branching address from ID and EX
 
   /**
     * Setup. You should not change this code
@@ -52,12 +52,10 @@ class InstructionFetch extends MultiIOModule {
     * You should expand on or rewrite the code below.
     */
 
-  // mux for choosing between the branching address from ID and EX
-  BranchFastMUX.in0 := io.PCPlusOffsetEX
-  BranchFastMUX.in1 := io.PCPlusOffsetID
+  BranchFastMUX.in0 := io.BranchAddressEX
+  BranchFastMUX.in1 := io.BranchAddressID
   BranchFastMUX.sel := (io.shouldBranchID) && (!io.isBranchingEX) // choosing ID if not currently branching in EX
 
-  // mux for choosing between PC and branching address
   InstrMUX.in0 := PC
   InstrMUX.in1 := BranchFastMUX.out
   InstrMUX.sel := ((io.shouldBranchID) || (io.shouldBranchEX)) // choosing branching address if the branch condition is true in either ID or EX

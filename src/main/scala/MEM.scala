@@ -20,7 +20,7 @@ class MemoryFetch() extends MultiIOModule {
     new Bundle {
       val ControlSignalsIn = Input(new ControlSignals)
       val ALUIn = Input(UInt(32.W))
-      val RegB = Input(UInt(32.W))
+      val Reg2 = Input(UInt(32.W))
       val WBRegAddressIn = Input(UInt(5.W))
       val invalidInstructionIn = Input(Bool())
 
@@ -50,7 +50,7 @@ class MemoryFetch() extends MultiIOModule {
   // also writing/reading memory based on control signal
 
   // inputting signals into data memory
-  DMEM.io.dataIn      := io.RegB
+  DMEM.io.dataIn      := io.Reg2
   DMEM.io.dataAddress := io.ALUIn
   DMEM.io.writeEnable := io.ControlSignalsIn.memWrite
 

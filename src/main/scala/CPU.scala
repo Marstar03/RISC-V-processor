@@ -72,14 +72,14 @@ class CPU extends MultiIOModule {
   IDBarrier.io.op1SelectIn := ID.io.op1Select
   IDBarrier.io.op2SelectIn := ID.io.op2Select
   IDBarrier.io.ALUopIn := ID.io.ALUop
-  IDBarrier.io.RegAIn := ID.io.RegA
-  IDBarrier.io.RegBIn := ID.io.RegB
+  IDBarrier.io.Reg1In := ID.io.Reg1
+  IDBarrier.io.Reg2In := ID.io.Reg2
   IDBarrier.io.ImmediateIn := ID.io.Immediate
   IDBarrier.io.WBRegAddressIn := ID.io.WBRegAddress
   IDBarrier.io.ReadRegAddress1In := ID.io.ReadRegAddress1
   IDBarrier.io.ReadRegAddress2In := ID.io.ReadRegAddress2
   IDBarrier.io.stall := EX.io.stall
-  IDBarrier.io.PCPlusOffsetEX := EX.io.PCPlusOffset
+  IDBarrier.io.BranchAddressEX := EX.io.BranchAddress
   IDBarrier.io.BranchDestinationEX := EX.io.BranchDestination
   IDBarrier.io.isBranching := EX.io.isBranching
 
@@ -89,8 +89,8 @@ class CPU extends MultiIOModule {
   EX.io.op1Select := IDBarrier.io.op1SelectOut
   EX.io.op2Select := IDBarrier.io.op2SelectOut
   EX.io.ALUop := IDBarrier.io.ALUopOut
-  EX.io.RegA := IDBarrier.io.RegAOut
-  EX.io.RegB := IDBarrier.io.RegBOut
+  EX.io.Reg1 := IDBarrier.io.Reg1Out
+  EX.io.Reg2 := IDBarrier.io.Reg2Out
   EX.io.Immediate := IDBarrier.io.ImmediateOut
   EX.io.WBRegAddressIn := IDBarrier.io.WBRegAddressOut
   EX.io.ReadRegAddress1 := IDBarrier.io.ReadRegAddress1Out
@@ -99,7 +99,7 @@ class CPU extends MultiIOModule {
   // EXBarrier signals
   EXBarrier.io.ControlSignalsIn := EX.io.ControlSignalsOut
   EXBarrier.io.ALUIn := EX.io.ALUOut
-  EXBarrier.io.RegBIn := EX.io.RegBOut
+  EXBarrier.io.Reg2In := EX.io.Reg2Out
   EXBarrier.io.WBRegAddressIn := EX.io.WBRegAddressOut
   EXBarrier.io.stall := EX.io.stall
 
@@ -107,7 +107,7 @@ class CPU extends MultiIOModule {
 
   MEM.io.ControlSignalsIn := EXBarrier.io.ControlSignalsOut
   MEM.io.ALUIn := EXBarrier.io.ALUOut
-  MEM.io.RegB := EXBarrier.io.RegBOut
+  MEM.io.Reg2 := EXBarrier.io.Reg2Out
   MEM.io.WBRegAddressIn := EXBarrier.io.WBRegAddressOut
   MEM.io.invalidInstructionIn := EXBarrier.io.invalidInstruction
 
@@ -137,9 +137,9 @@ class CPU extends MultiIOModule {
   ID.io.ControlSignalsMEM := MEM.io.ControlSignalsOut
 
   // WB to ID
-  ID.io.WBRegAddressIn := WB.io.WBRegAddressOut
-  ID.io.RegDataIn := WB.io.MuxDataOut
-  ID.io.ControlSignalsIn := WB.io.ControlSignalsOut
+  ID.io.WBRegAddressWB := WB.io.WBRegAddressOut
+  ID.io.RegDataWB := WB.io.MuxDataOut
+  ID.io.ControlSignalsWB := WB.io.ControlSignalsOut
 
   // MEM to EX
   EX.io.ALUOutMEM := MEM.io.ALUOut
@@ -155,12 +155,12 @@ class CPU extends MultiIOModule {
 
   // EX to IF
   IF.io.stall := EX.io.stall
-  IF.io.PCPlusOffsetEX := EX.io.PCPlusOffset
+  IF.io.BranchAddressEX := EX.io.BranchAddress
   IF.io.shouldBranchEX := EX.io.shouldBranch
   IF.io.isBranchingEX := EX.io.isBranching
 
   // ID to IF
-  IF.io.PCPlusOffsetID := ID.io.PCPlusOffsetFast
+  IF.io.BranchAddressID := ID.io.BranchAddressFast
   IF.io.shouldBranchID := ID.io.shouldBranchFast
 
 }
