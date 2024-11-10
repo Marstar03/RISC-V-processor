@@ -80,7 +80,7 @@ class CPU extends MultiIOModule {
   IDBarrier.io.ReadRegAddress2In := ID.io.ReadRegAddress2
   IDBarrier.io.stall := EX.io.stall
   IDBarrier.io.BranchAddressEX := EX.io.BranchAddress
-  IDBarrier.io.BranchDestinationEX := EX.io.BranchDestination
+  IDBarrier.io.StoredBranchAddressEX := EX.io.StoredBranchAddress
   IDBarrier.io.isBranching := EX.io.isBranching
 
   EX.io.PCIn := IDBarrier.io.PCOut

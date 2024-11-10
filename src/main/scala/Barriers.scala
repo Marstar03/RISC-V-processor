@@ -62,7 +62,7 @@ class IDBarrier() extends Module {
       val stall = Input(Bool())
       val isBranching = Input(Bool())
       val BranchAddressEX = Input(UInt())
-      val BranchDestinationEX = Input(UInt())
+      val StoredBranchAddressEX = Input(UInt())
 
       val PCOut = Output(UInt())
       val ControlSignalsOut = Output(new ControlSignals)
