@@ -3,7 +3,6 @@ import chisel3._
 import chisel3.util._
 import chisel3.experimental.MultiIOModule
 
-
 class WriteBack() extends MultiIOModule {
 
   val io = IO(
@@ -20,8 +19,9 @@ class WriteBack() extends MultiIOModule {
       val invalidInstructionOut = Output(Bool())
     })
 
-  val MUX = Module(new MyMux).io // mux for å velge mellom ALUIn og MemDataIn til register WB data
+  val MUX = Module(new Mux2).io
 
+  // choosing between ALU output and memory output to write to register 
   MUX.in0 := io.ALUIn
   MUX.in1 := io.MemDataIn
   MUX.sel := io.ControlSignalsIn.memRead

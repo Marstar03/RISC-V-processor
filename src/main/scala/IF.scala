@@ -23,10 +23,11 @@ class InstructionFetch extends MultiIOModule {
     */
   val io = IO(
     new Bundle {
-      val PCPlusOffsetIn = Input(UInt())
-      val ControlSignalsIn = Input(new ControlSignals)
-      val shouldBranchIn = Input(Bool())
-
+      val BranchAddressEX = Input(UInt())
+      val shouldBranchEX = Input(Bool())
+      val isBranchingEX = Input(Bool())
+      val BranchAddressID = Input(UInt())
+      val shouldBranchID = Input(Bool())
       val stall = Input(Bool())
 
       val PC = Output(UInt())
@@ -35,9 +36,8 @@ class InstructionFetch extends MultiIOModule {
 
   val IMEM = Module(new IMEM)
   val PC   = RegInit(UInt(32.W), 0.U)
-  val InstrMUX = Module(new MyMux).io // mux for å velge mellom PC og PCPlusOffsetIn
-  val pcMUX = Module(new MyMux).io 
-
+  val InstrMUX = Module(new Mux2).io // mux for choosing between PC and branching address
+  val BranchFastMUX = Module(new Mux2).io // mux for choosing between the branching address from ID and EX
 
   /**
     * Setup. You should not change this code
@@ -52,46 +52,25 @@ class InstructionFetch extends MultiIOModule {
     * You should expand on or rewrite the code below.
     */
 
-  // Mux that chooses the address between the pc and pc/reg-value + an offset
-  InstrMUX.in0 := PC
-  InstrMUX.in1 := io.PCPlusOffsetIn
-  InstrMUX.sel := io.shouldBranchIn
+  BranchFastMUX.in0 := io.BranchAddressEX
+  BranchFastMUX.in1 := io.BranchAddressID
+  BranchFastMUX.sel := (io.shouldBranchID) && (!io.isBranchingEX) // choosing ID if not currently branching in EX
 
-  // the pc output signal will then either remain pc or be updated to the pc + offset
-  // when (!io.stall) {
-  //   io.PC := InstrMUX.out
-  // }
-  io.PC := InstrMUX.out
+  InstrMUX.in0 := PC
+  InstrMUX.in1 := BranchFastMUX.out
+  InstrMUX.sel := ((io.shouldBranchID) || (io.shouldBranchEX)) // choosing branching address if the branch condition is true in either ID or EX
+
+  io.PC := InstrMUX.out // PC output will be the output of the mux above
   IMEM.io.instructionAddress := InstrMUX.out
 
-  // created a mux for updating the actual pc for the next instruction. Choosing between pc + 4 and pc + offset + 4
-  pcMUX.in0 := PC + 4.U
-  pcMUX.in1 := io.PCPlusOffsetIn + 4.U
-  pcMUX.sel := io.shouldBranchIn
-
-  //PC := pcMUX.out
-
+  // only updating the PC register if we are not currently stalling
   when (!io.stall) {
-    PC := pcMUX.out
+    PC := InstrMUX.out + 4.U
   }
-
-  // // Register to hold the next PC value
-  // val nextPC = RegInit(PC)
-
-  // // Update the nextPC register based on the stall signal
-  // when (!io.stall) {
-  //   nextPC := pcMUX.out
-  // }
-
-  // // Update the PC register with the value from nextPC
-  // PC := nextPC
 
   val instruction = Wire(new Instruction)
   instruction := IMEM.io.instruction.asTypeOf(new Instruction)
   io.InstructionSignal := instruction
-
-  //io.InstructionSignal := IMEM.io.instruction.asTypeOf(new Instruction)
-
 
   /**
     * Setup. You should not change this code.

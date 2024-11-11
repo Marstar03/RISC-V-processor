@@ -25,19 +25,21 @@ class IFBarrier() extends Module {
 
   InstructionBarrierReg := io.InstructionIn
 
+  // only updating barrier if no stall
   when (!io.stall) {
     barrierReg := io.PCIn
   }
 
+  // using a register to delay the instruction signal by one cycle in case of a stall
   when (!StallPrevReg) {
     io.InstructionOut := io.InstructionIn
   } .otherwise {
     io.InstructionOut := InstructionBarrierReg
   }
-
-  // barrierReg := io.PCIn
+  
+  // passing register value to ID stage
   io.PCOut := barrierReg
-  // io.InstructionOut := io.InstructionIn
+
 }
 
 class IDBarrier() extends Module {
@@ -50,18 +52,18 @@ class IDBarrier() extends Module {
       val op1SelectIn = Input(UInt(1.W))
       val op2SelectIn = Input(UInt(1.W))
       val ALUopIn = Input(UInt(4.W))
-      val RegAIn = Input(UInt(32.W))
-      val RegBIn = Input(UInt(32.W))
+      val Reg1In = Input(UInt(32.W))
+      val Reg2In = Input(UInt(32.W))
       val ImmediateIn = Input(SInt(32.W))
       val WBRegAddressIn = Input(UInt(5.W))
-
       // For forwarding/branching
       val ReadRegAddress1In = Input(UInt(5.W))
       val ReadRegAddress2In = Input(UInt(5.W))
       val stall = Input(Bool())
-      //val shouldBranch = Input(Bool())
       val isBranching = Input(Bool())
-      val PCPlusOffsetEX = Input(UInt())
+      val BranchAddressEX = Input(UInt())
+      val Reg1BranchCSMEMReadIn = Input(UInt(1.W))
+      val Reg2BranchCSMEMReadIn = Input(UInt(1.W))
 
       val PCOut = Output(UInt())
       val ControlSignalsOut = Output(new ControlSignals)
@@ -69,16 +71,17 @@ class IDBarrier() extends Module {
       val op1SelectOut = Output(UInt(1.W))
       val op2SelectOut = Output(UInt(1.W))
       val ALUopOut = Output(UInt(4.W))
-      val RegAOut = Output(UInt(32.W))
-      val RegBOut = Output(UInt(32.W))
+      val Reg1Out = Output(UInt(32.W))
+      val Reg2Out = Output(UInt(32.W))
       val ImmediateOut = Output(SInt(32.W))
       val WBRegAddressOut = Output(UInt(5.W))
-
       // For forwarding
       val ReadRegAddress1Out = Output(UInt(5.W))
       val ReadRegAddress2Out = Output(UInt(5.W))
+      val Reg1BranchCSMEMReadOut = Output(UInt(1.W))
+      val Reg2BranchCSMEMReadOut = Output(UInt(1.W))
 
-      // Signal fra IDBarrier direkte til EXBarrier
+      // signal from IDBarrier directly to EXBarrier
       val EXShouldNOPCS = Output(Bool())
     }
   )
@@ -89,62 +92,51 @@ class IDBarrier() extends Module {
   val op1SelectBarrierReg = RegInit(0.U(1.W))
   val op2SelectBarrierReg = RegInit(0.U(1.W))
   val ALUopBarrierReg = RegInit(0.U(4.W))
-  val RegABarrierReg = RegInit(0.U(32.W))
-  val RegBBarrierReg = RegInit(0.U(32.W))
+  val Reg1BarrierReg = RegInit(0.U(32.W))
+  val Reg2BarrierReg = RegInit(0.U(32.W))
   val ImmediateBarrierReg = RegInit(0.S(32.W))
   val WBRegAddressBarrierReg = RegInit(0.U(32.W))
   val ReadRegAddress1BarrierReg = RegInit(0.U(32.W))
   val ReadRegAddress2BarrierReg = RegInit(0.U(32.W))
+  val Reg1BranchCSMEMReadBarrierReg = RegInit(0.U(1.W))
+  val Reg2BranchCSMEMReadBarrierReg = RegInit(0.U(1.W))
 
-  //val stallReg = RegInit(0.U.asTypeOf(new Bool))
-
-  // Hvis EX har stall signal, vil vi ta inn 
-  //stallReg := io.stall
-
-  // TODO: må ta inn pcplusoffset signalet i EX som input og sammenligne med io.PCIn her
-  when ((!io.stall) && ((io.PCIn === io.PCPlusOffsetEX) || (!io.isBranching))) {
-  //when (!io.stall) {
+  // only updating barrier if no stall and we either are not branching or we have reached the branch target
+  when ((!io.stall) && ((io.PCIn === io.BranchAddressEX) || (!io.isBranching))) {
     PCBarrierReg := io.PCIn
     ControlSignalsBarrierReg := io.ControlSignalsIn
     branchTypeBarrierReg := io.branchTypeIn
     op1SelectBarrierReg := io.op1SelectIn
     op2SelectBarrierReg := io.op2SelectIn
     ALUopBarrierReg := io.ALUopIn
-    RegABarrierReg := io.RegAIn
-    RegBBarrierReg := io.RegBIn
+    Reg1BarrierReg := io.Reg1In
+    Reg2BarrierReg := io.Reg2In
     ImmediateBarrierReg := io.ImmediateIn
     WBRegAddressBarrierReg := io.WBRegAddressIn
     ReadRegAddress1BarrierReg := io.ReadRegAddress1In
     ReadRegAddress2BarrierReg := io.ReadRegAddress2In
+    Reg1BranchCSMEMReadBarrierReg := io.Reg1BranchCSMEMReadIn
+    Reg2BranchCSMEMReadBarrierReg := io.Reg2BranchCSMEMReadIn
 
   } 
 
-  io.EXShouldNOPCS := ((io.PCIn =/= io.PCPlusOffsetEX) && (io.isBranching))
-
+  // passing register values to EX stage
+  io.EXShouldNOPCS := ((io.PCIn =/= io.BranchAddressEX) && (io.isBranching))
   io.PCOut := PCBarrierReg
-
   io.ControlSignalsOut := ControlSignalsBarrierReg
-
   io.branchTypeOut := branchTypeBarrierReg
-
   io.op1SelectOut := op1SelectBarrierReg
-
   io.op2SelectOut := op2SelectBarrierReg
-
   io.ALUopOut := ALUopBarrierReg
-
-  io.RegAOut := RegABarrierReg
-
-  io.RegBOut := RegBBarrierReg
-
+  io.Reg1Out := Reg1BarrierReg
+  io.Reg2Out := Reg2BarrierReg
   io.ImmediateOut := ImmediateBarrierReg
-  
   io.WBRegAddressOut := WBRegAddressBarrierReg
-
   // For forwarding
   io.ReadRegAddress1Out := ReadRegAddress1BarrierReg
-
   io.ReadRegAddress2Out := ReadRegAddress2BarrierReg
+  io.Reg1BranchCSMEMReadOut := Reg1BranchCSMEMReadBarrierReg
+  io.Reg2BranchCSMEMReadOut := Reg2BranchCSMEMReadBarrierReg
 
 }
 
@@ -152,69 +144,49 @@ class EXBarrier() extends Module {
 
   val io = IO(
     new Bundle {
-      val PCPlusOffsetIn = Input(UInt())
       val ControlSignalsIn = Input(new ControlSignals)
       val ALUIn = Input(UInt(32.W))
-      val RegBIn = Input(UInt(32.W))
+      val Reg2In = Input(UInt(32.W))
       val WBRegAddressIn = Input(UInt(5.W))
-      val shouldBranchIn = Input(Bool())
-
-      // Signal fra IDBarrier direkte til EXBarrier
+      // signal from IDBarrier directly to EXBarrier
       val EXShouldNOPCS = Input(Bool())
-
       // For forwarding
       val stall = Input(Bool())
 
-      val PCPlusOffsetOut = Output(UInt())
       val ControlSignalsOut = Output(new ControlSignals)
       val ALUOut = Output(UInt(32.W))
-      val RegBOut = Output(UInt(32.W))
+      val Reg2Out = Output(UInt(32.W))
       val WBRegAddressOut = Output(UInt(5.W))
-      val shouldBranchOut = Output(Bool())
       val invalidInstruction = Output(Bool())
     }
   )
 
-  val PCPlusOffsetBarrierReg = RegInit(0.U(32.W))
   val ControlSignalsBarrierReg = RegInit(0.U.asTypeOf(new ControlSignals))
   val ALUBarrierReg = RegInit(0.U(32.W))
-  val RegBBarrierReg = RegInit(0.U(32.W))
+  val Reg2BarrierReg = RegInit(0.U(32.W))
   val WBRegAddressBarrierReg = RegInit(0.U(32.W))
-  val shouldBranchBarrierReg = RegInit(0.U.asTypeOf(new Bool))
   val invalidInstructionBarrierReg = RegInit(false.B)
 
-  //val stallReg = RegInit(0.U.asTypeOf(new Bool))
-
-  // Hvis EX har stall signal, vil vi ta inn instruksjonen og holde den der en ekstra sykel. Fra før putter vi verdiene inn i registre, og henter ut fra registre igjen
-  // slik at det blir en delay på en sykel. Legger nå til slik at hvis stall er true i EX nå, er stallReg verdien 0 fra før, så tar inn verdiene i barrier.
-  // Neste sykel har stallReg blitt true, så tar ikke inn de nye verdiene fra EX, men beholder de gamle. Tar derimot inn 
-  //stallReg := io.stall
-
-  PCPlusOffsetBarrierReg := io.PCPlusOffsetIn
+  // passing EX signals to barrier registers
   ALUBarrierReg := io.ALUIn
-  RegBBarrierReg := io.RegBIn
+  Reg2BarrierReg := io.Reg2In
   WBRegAddressBarrierReg := io.WBRegAddressIn
-  shouldBranchBarrierReg := io.shouldBranchIn
 
+  // if we are stalling the EX stage, we input the instruction from EX, but in order for it not no execute more than once,
+  // we set the instruction as invalid and nop the control signals
   when (!io.stall && !io.EXShouldNOPCS) {
     ControlSignalsBarrierReg := io.ControlSignalsIn
     invalidInstructionBarrierReg := false.B
   } .otherwise {
-    // lagt inn slik at også wb adressen blir nullet ut slik at vi ikke forwarder i dette tilfellet
     ControlSignalsBarrierReg := ControlSignals.nop
     invalidInstructionBarrierReg := true.B
   }
-  io.PCPlusOffsetOut := PCPlusOffsetBarrierReg
 
+  // passing register values to MEM stage
   io.ControlSignalsOut := ControlSignalsBarrierReg
-
   io.ALUOut := ALUBarrierReg
-
-  io.RegBOut := RegBBarrierReg
-  
+  io.Reg2Out := Reg2BarrierReg
   io.WBRegAddressOut := WBRegAddressBarrierReg
-
-  io.shouldBranchOut := shouldBranchBarrierReg
   io.invalidInstruction := invalidInstructionBarrierReg
 }
 
@@ -226,9 +198,7 @@ class MEMBarrier() extends Module {
       val ALUIn = Input(UInt(32.W))
       val MemDataIn = Input(UInt(32.W))
       val WBRegAddressIn = Input(UInt(5.W))
-
       // For forwarding
-      //val stall = Input(Bool())
       val invalidInstructionIn = Input(Bool())
 
       val ControlSignalsOut = Output(new ControlSignals)
@@ -244,20 +214,16 @@ class MEMBarrier() extends Module {
   val WBRegAddressBarrierReg = RegInit(0.U(32.W))
   val invalidInstructionBarrierReg = RegInit(false.B)
 
-  //val stallReg = RegInit(0.U.asTypeOf(new Bool))
-  //stallReg := io.stall
-
+  // passing MEM signals to barrier registers
   ControlSignalsBarrierReg := io.ControlSignalsIn
   ALUBarrierReg := io.ALUIn
   WBRegAddressBarrierReg := io.WBRegAddressIn
   invalidInstructionBarrierReg := io.invalidInstructionIn
 
+  // passing register values to WB stage
   io.ControlSignalsOut := ControlSignalsBarrierReg
-
   io.ALUOut := ALUBarrierReg
-
   io.MemDataOut := io.MemDataIn
-  
   io.WBRegAddressOut := WBRegAddressBarrierReg
   io.invalidInstructionOut := invalidInstructionBarrierReg
 }

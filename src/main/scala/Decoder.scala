@@ -73,7 +73,7 @@ class Decoder() extends Module {
 
     // new in milestone 2:
     LUI   -> List(Y,        N,       N,        N,       N,    branchType.DC, rs1,       imm,       UTYPE,        ALUOps.LUI),
-    JAL  -> List(Y,        N,       N,        N,       Y,    branchType.jump, PC,       rs2,       JTYPE,        ALUOps.JAL), // could have set aluops as DC since we use pc + 4 instead of alu during JAL and JALR
+    JAL  -> List(Y,        N,       N,        N,       Y,    branchType.jump, PC,       rs2,       JTYPE,        ALUOps.JAL),
     JALR  -> List(Y,        N,       N,        N,       Y,    branchType.jumpReg, PC,       imm,       ITYPE,        ALUOps.JAL),
     BEQ  -> List(N,        N,       N,        Y,       N,    branchType.beq, rs1,       rs2,       BTYPE,        ALUOps.XOR),
     BNE  -> List(N,        N,       N,        Y,       N,    branchType.neq, rs1,       rs2,       BTYPE,        ALUOps.XOR),

@@ -72,14 +72,17 @@ class CPU extends MultiIOModule {
   IDBarrier.io.op1SelectIn := ID.io.op1Select
   IDBarrier.io.op2SelectIn := ID.io.op2Select
   IDBarrier.io.ALUopIn := ID.io.ALUop
-  IDBarrier.io.RegAIn := ID.io.RegA
-  IDBarrier.io.RegBIn := ID.io.RegB
+  IDBarrier.io.Reg1In := ID.io.Reg1
+  IDBarrier.io.Reg2In := ID.io.Reg2
   IDBarrier.io.ImmediateIn := ID.io.Immediate
   IDBarrier.io.WBRegAddressIn := ID.io.WBRegAddress
   IDBarrier.io.ReadRegAddress1In := ID.io.ReadRegAddress1
   IDBarrier.io.ReadRegAddress2In := ID.io.ReadRegAddress2
+  IDBarrier.io.Reg1BranchCSMEMReadIn := ID.io.Reg1BranchCSMEMRead
+  IDBarrier.io.Reg2BranchCSMEMReadIn := ID.io.Reg2BranchCSMEMRead
+
   IDBarrier.io.stall := EX.io.stall
-  IDBarrier.io.PCPlusOffsetEX := EX.io.PCPlusOffset
+  IDBarrier.io.BranchAddressEX := EX.io.BranchAddress
   IDBarrier.io.isBranching := EX.io.isBranching
 
   EX.io.PCIn := IDBarrier.io.PCOut
@@ -88,30 +91,28 @@ class CPU extends MultiIOModule {
   EX.io.op1Select := IDBarrier.io.op1SelectOut
   EX.io.op2Select := IDBarrier.io.op2SelectOut
   EX.io.ALUop := IDBarrier.io.ALUopOut
-  EX.io.RegA := IDBarrier.io.RegAOut
-  EX.io.RegB := IDBarrier.io.RegBOut
+  EX.io.Reg1 := IDBarrier.io.Reg1Out
+  EX.io.Reg2 := IDBarrier.io.Reg2Out
   EX.io.Immediate := IDBarrier.io.ImmediateOut
   EX.io.WBRegAddressIn := IDBarrier.io.WBRegAddressOut
   EX.io.ReadRegAddress1 := IDBarrier.io.ReadRegAddress1Out
   EX.io.ReadRegAddress2 := IDBarrier.io.ReadRegAddress2Out
+  EX.io.Reg1BranchCSMEMReadIn := IDBarrier.io.Reg1BranchCSMEMReadOut
+  EX.io.Reg2BranchCSMEMReadIn := IDBarrier.io.Reg2BranchCSMEMReadOut
 
   // EXBarrier signals
-  EXBarrier.io.PCPlusOffsetIn := EX.io.PCPlusOffset
   EXBarrier.io.ControlSignalsIn := EX.io.ControlSignalsOut
   EXBarrier.io.ALUIn := EX.io.ALUOut
-  EXBarrier.io.RegBIn := EX.io.RegBOut
+  EXBarrier.io.Reg2In := EX.io.Reg2Out
   EXBarrier.io.WBRegAddressIn := EX.io.WBRegAddressOut
-  EXBarrier.io.shouldBranchIn := EX.io.shouldBranch
   EXBarrier.io.stall := EX.io.stall
 
   EXBarrier.io.EXShouldNOPCS := IDBarrier.io.EXShouldNOPCS
 
-  MEM.io.PCPlusOffsetIn := EXBarrier.io.PCPlusOffsetOut
   MEM.io.ControlSignalsIn := EXBarrier.io.ControlSignalsOut
   MEM.io.ALUIn := EXBarrier.io.ALUOut
-  MEM.io.RegB := EXBarrier.io.RegBOut
+  MEM.io.Reg2 := EXBarrier.io.Reg2Out
   MEM.io.WBRegAddressIn := EXBarrier.io.WBRegAddressOut
-  MEM.io.shouldBranchIn := EXBarrier.io.shouldBranchOut
   MEM.io.invalidInstructionIn := EXBarrier.io.invalidInstruction
 
   // MEMBarrier signals
@@ -119,7 +120,6 @@ class CPU extends MultiIOModule {
   MEMBarrier.io.ALUIn := MEM.io.ALUOut
   MEMBarrier.io.MemDataIn := MEM.io.MemData
   MEMBarrier.io.WBRegAddressIn := MEM.io.WBRegAddressOut
-  //MEMBarrier.io.stall := EX.io.stall
   MEMBarrier.io.invalidInstructionIn := MEM.io.invalidInstructionOut
 
   WB.io.ControlSignalsIn := MEMBarrier.io.ControlSignalsOut
@@ -130,22 +130,25 @@ class CPU extends MultiIOModule {
 
   // Rest of signals
 
+  // EX to ID
+  ID.io.WBRegAddressEX := EX.io.WBRegAddressOut
+  ID.io.ALUOutEX := EX.io.ALUOut
+  ID.io.ControlSignalsEX := EX.io.ControlSignalsOut
+
   // MEM to ID
-  ID.io.shouldBranch := MEM.io.shouldBranchOut
+  ID.io.WBRegAddressMEM := MEM.io.WBRegAddressOut
+  ID.io.ALUOutMEM := MEM.io.ALUOut
+  ID.io.ControlSignalsMEM := MEM.io.ControlSignalsOut
 
   // WB to ID
-  ID.io.WBRegAddressIn := WB.io.WBRegAddressOut
-  ID.io.RegDataIn := WB.io.MuxDataOut
-  ID.io.ControlSignalsIn := WB.io.ControlSignalsOut
+  ID.io.WBRegAddressWB := WB.io.WBRegAddressOut
+  ID.io.RegDataWB := WB.io.MuxDataOut
+  ID.io.ControlSignalsWB := WB.io.ControlSignalsOut
 
-  // For forwarding
-  
   // MEM to EX
   EX.io.ALUOutMEM := MEM.io.ALUOut
   EX.io.WBRegAddressOutMEM := MEM.io.WBRegAddressOut
   EX.io.ControlSignalsOutMEM := MEM.io.ControlSignalsOut
-  EX.io.ControlSignalsPrevMEM := MEM.io.ControlSignalsPrev
-  EX.io.MemDataMEM := MEM.io.MemData
   EX.io.invalidInstructionOutMEM := MEM.io.invalidInstructionOut
 
   // WB to EX
@@ -156,9 +159,12 @@ class CPU extends MultiIOModule {
 
   // EX to IF
   IF.io.stall := EX.io.stall
+  IF.io.BranchAddressEX := EX.io.BranchAddress
+  IF.io.shouldBranchEX := EX.io.shouldBranch
+  IF.io.isBranchingEX := EX.io.isBranching
 
-  IF.io.PCPlusOffsetIn := EX.io.PCPlusOffset
-  IF.io.ControlSignalsIn := EX.io.ControlSignalsOut
-  IF.io.shouldBranchIn := EX.io.shouldBranch
+  // ID to IF
+  IF.io.BranchAddressID := ID.io.BranchAddressFast
+  IF.io.shouldBranchID := ID.io.shouldBranchFast
 
 }
