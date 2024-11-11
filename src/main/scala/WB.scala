@@ -19,7 +19,7 @@ class WriteBack() extends MultiIOModule {
       val invalidInstructionOut = Output(Bool())
     })
 
-  val MUX = Module(new MyMux).io
+  val MUX = Module(new Mux2).io
 
   // choosing between ALU output and memory output to write to register 
   MUX.in0 := io.ALUIn

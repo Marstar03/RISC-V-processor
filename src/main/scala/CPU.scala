@@ -78,9 +78,11 @@ class CPU extends MultiIOModule {
   IDBarrier.io.WBRegAddressIn := ID.io.WBRegAddress
   IDBarrier.io.ReadRegAddress1In := ID.io.ReadRegAddress1
   IDBarrier.io.ReadRegAddress2In := ID.io.ReadRegAddress2
+  IDBarrier.io.Reg1BranchCSMEMReadIn := ID.io.Reg1BranchCSMEMRead
+  IDBarrier.io.Reg2BranchCSMEMReadIn := ID.io.Reg2BranchCSMEMRead
+
   IDBarrier.io.stall := EX.io.stall
   IDBarrier.io.BranchAddressEX := EX.io.BranchAddress
-  IDBarrier.io.StoredBranchAddressEX := EX.io.StoredBranchAddress
   IDBarrier.io.isBranching := EX.io.isBranching
 
   EX.io.PCIn := IDBarrier.io.PCOut
@@ -95,6 +97,8 @@ class CPU extends MultiIOModule {
   EX.io.WBRegAddressIn := IDBarrier.io.WBRegAddressOut
   EX.io.ReadRegAddress1 := IDBarrier.io.ReadRegAddress1Out
   EX.io.ReadRegAddress2 := IDBarrier.io.ReadRegAddress2Out
+  EX.io.Reg1BranchCSMEMReadIn := IDBarrier.io.Reg1BranchCSMEMReadOut
+  EX.io.Reg2BranchCSMEMReadIn := IDBarrier.io.Reg2BranchCSMEMReadOut
 
   // EXBarrier signals
   EXBarrier.io.ControlSignalsIn := EX.io.ControlSignalsOut

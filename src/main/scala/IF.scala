@@ -36,8 +36,8 @@ class InstructionFetch extends MultiIOModule {
 
   val IMEM = Module(new IMEM)
   val PC   = RegInit(UInt(32.W), 0.U)
-  val InstrMUX = Module(new MyMux).io // mux for choosing between PC and branching address
-  val BranchFastMUX = Module(new MyMux).io // mux for choosing between the branching address from ID and EX
+  val InstrMUX = Module(new Mux2).io // mux for choosing between PC and branching address
+  val BranchFastMUX = Module(new Mux2).io // mux for choosing between the branching address from ID and EX
 
   /**
     * Setup. You should not change this code

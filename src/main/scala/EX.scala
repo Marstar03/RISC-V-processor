@@ -29,6 +29,8 @@ class Execute extends MultiIOModule {
       val ControlSignalsOutWB = Input(new ControlSignals)
       val invalidInstructionOutMEM = Input(Bool())
       val invalidInstructionOutWB = Input(Bool())
+      val Reg1BranchCSMEMReadIn = Input(UInt(1.W))
+      val Reg2BranchCSMEMReadIn = Input(UInt(1.W))
 
       val BranchAddress = Output(UInt())
       val ControlSignalsOut = Output(new ControlSignals)
@@ -37,15 +39,14 @@ class Execute extends MultiIOModule {
       val WBRegAddressOut = Output(UInt(5.W))
       val shouldBranch = Output(Bool())
       val isBranching = Output(Bool())
-      val StoredBranchAddress = Output(UInt())
       val stall = Output(Bool())
     }
   )
 
-  val op1MUX = Module(new MyMux).io
-  val op2MUX = Module(new MyMux).io
-  val jumpMUX = Module(new MyMux).io
-  val pcplus4MUX = Module(new MyMux).io
+  val op1MUX = Module(new Mux2).io
+  val op2MUX = Module(new Mux2).io
+  val jumpMUX = Module(new Mux2).io
+  val pcplus4MUX = Module(new Mux2).io
 
   val forwardingUnit1 = Module(new Mux3).io
   val forwardingUnit2 = Module(new Mux3).io
@@ -172,18 +173,18 @@ class Execute extends MultiIOModule {
 
   // shouldbranch is a signal that is true if any of the conditions for branch/jump is satisfied
   // so it decides if we should use the BranchAddress signal for addressing the next instruction
-  // Change for fast branch handling: we only handle BEQ and BNE here if we depend on a value being read from memory
+  // Change for fast branch handling: we only handle BEQ and BNE here if we depend on a value being read from memory,
+  // which happens if either Reg1BranchCSMEMReadIn or Reg2BranchCSMEMReadIn is 1
   io.shouldBranch := (io.ControlSignalsIn.jump || 
-                  ((io.branchType === branchType.beq) && (ALU.aluResult === 0.U) && (io.ControlSignalsOutMEM.memRead || io.ControlSignalsOutWB.memRead)) || 
-                  ((io.branchType === branchType.neq) && (ALU.aluResult =/= 0.U) && (io.ControlSignalsOutMEM.memRead || io.ControlSignalsOutWB.memRead)) ||
-                  // ((io.branchType === branchType.beq) && (ALU.aluResult === 0.U)) || 
-                  // ((io.branchType === branchType.neq) && (ALU.aluResult =/= 0.U)) ||
+                  ((io.branchType === branchType.beq) && (ALU.aluResult === 0.U) && (io.Reg1BranchCSMEMReadIn === 1.U || io.Reg2BranchCSMEMReadIn === 1.U)) || 
+                  ((io.branchType === branchType.neq) && (ALU.aluResult =/= 0.U) && (io.Reg1BranchCSMEMReadIn === 1.U || io.Reg2BranchCSMEMReadIn === 1.U)) ||
                   ((io.branchType === branchType.lt) && (ALU.aluResult === 1.U)) ||
                   ((io.branchType === branchType.gte) && (ALU.aluResult === 0.U)) ||
                   ((io.branchType === branchType.ltu) && (ALU.aluResult === 1.U)) ||
                   ((io.branchType === branchType.gteu) && (ALU.aluResult === 0.U))) &&
                   (io.PCIn =/= PreviousPCIn)
 
+  // creating signal which is true the whole time while we are waiting for our target instruction
   io.isBranching := (io.ControlSignalsIn.jump || 
                   ((io.branchType === branchType.beq) && (ALU.aluResult === 0.U)) || 
                   ((io.branchType === branchType.neq) && (ALU.aluResult =/= 0.U)) ||
@@ -202,8 +203,6 @@ class Execute extends MultiIOModule {
   when (ShouldStoreBranchAddress) {
     StoredBranchAddressReg := io.BranchAddress
   }
-
-  io.StoredBranchAddress := StoredBranchAddressReg
 
   // configuration such that the branching address stays the same while we are waiting for the instruction at the target branch address
   when (io.isBranching && (!ShouldStoreBranchAddress)) {

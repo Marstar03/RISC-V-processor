@@ -62,7 +62,8 @@ class IDBarrier() extends Module {
       val stall = Input(Bool())
       val isBranching = Input(Bool())
       val BranchAddressEX = Input(UInt())
-      val StoredBranchAddressEX = Input(UInt())
+      val Reg1BranchCSMEMReadIn = Input(UInt(1.W))
+      val Reg2BranchCSMEMReadIn = Input(UInt(1.W))
 
       val PCOut = Output(UInt())
       val ControlSignalsOut = Output(new ControlSignals)
@@ -77,6 +78,8 @@ class IDBarrier() extends Module {
       // For forwarding
       val ReadRegAddress1Out = Output(UInt(5.W))
       val ReadRegAddress2Out = Output(UInt(5.W))
+      val Reg1BranchCSMEMReadOut = Output(UInt(1.W))
+      val Reg2BranchCSMEMReadOut = Output(UInt(1.W))
 
       // signal from IDBarrier directly to EXBarrier
       val EXShouldNOPCS = Output(Bool())
@@ -95,6 +98,8 @@ class IDBarrier() extends Module {
   val WBRegAddressBarrierReg = RegInit(0.U(32.W))
   val ReadRegAddress1BarrierReg = RegInit(0.U(32.W))
   val ReadRegAddress2BarrierReg = RegInit(0.U(32.W))
+  val Reg1BranchCSMEMReadBarrierReg = RegInit(0.U(1.W))
+  val Reg2BranchCSMEMReadBarrierReg = RegInit(0.U(1.W))
 
   // only updating barrier if no stall and we either are not branching or we have reached the branch target
   when ((!io.stall) && ((io.PCIn === io.BranchAddressEX) || (!io.isBranching))) {
@@ -110,6 +115,8 @@ class IDBarrier() extends Module {
     WBRegAddressBarrierReg := io.WBRegAddressIn
     ReadRegAddress1BarrierReg := io.ReadRegAddress1In
     ReadRegAddress2BarrierReg := io.ReadRegAddress2In
+    Reg1BranchCSMEMReadBarrierReg := io.Reg1BranchCSMEMReadIn
+    Reg2BranchCSMEMReadBarrierReg := io.Reg2BranchCSMEMReadIn
 
   } 
 
@@ -128,6 +135,8 @@ class IDBarrier() extends Module {
   // For forwarding
   io.ReadRegAddress1Out := ReadRegAddress1BarrierReg
   io.ReadRegAddress2Out := ReadRegAddress2BarrierReg
+  io.Reg1BranchCSMEMReadOut := Reg1BranchCSMEMReadBarrierReg
+  io.Reg2BranchCSMEMReadOut := Reg2BranchCSMEMReadBarrierReg
 
 }
 

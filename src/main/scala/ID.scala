@@ -48,12 +48,14 @@ class InstructionDecode extends MultiIOModule {
       val Immediate = Output(SInt(32.W))
       val WBRegAddress = Output(UInt(5.W))
 
-      // For forwarding. Need the instruction signal in the EX stage to get the address of the registers that are being read
+      // For forwarding
       val ReadRegAddress1 = Output(UInt(5.W))
       val ReadRegAddress2 = Output(UInt(5.W))
-
       val shouldBranchFast = Output(Bool())
       val BranchAddressFast = Output(UInt()) 
+      val Reg1BranchCSMEMRead = Output(UInt(1.W))
+      val Reg2BranchCSMEMRead = Output(UInt(1.W))
+      
     }
   )
 
@@ -121,37 +123,37 @@ class InstructionDecode extends MultiIOModule {
 
   val Reg1BranchValue = Wire(UInt(32.W))
   val Reg2BranchValue = Wire(UInt(32.W))
-  val Reg1Branch = Wire(new ControlSignals)
-  val Reg2Branch = Wire(new ControlSignals)
+  val Reg1BranchControlSignal = Wire(new ControlSignals)
+  val Reg2BranchControlSignal = Wire(new ControlSignals)
 
   // forwarding register 1 values for fast branch handling
   when ((io.InstructionSignal.registerRs1 === io.WBRegAddressEX) && (io.ControlSignalsEX.regWrite) && (io.WBRegAddressEX =/= 0.U)) {
     Reg1BranchValue := io.ALUOutEX
-    Reg1Branch := io.ControlSignalsEX
+    Reg1BranchControlSignal := io.ControlSignalsEX
   } .elsewhen ((io.InstructionSignal.registerRs1 === io.WBRegAddressMEM) && (io.ControlSignalsMEM.regWrite) && (io.WBRegAddressMEM =/= 0.U)) {
     Reg1BranchValue := io.ALUOutMEM
-    Reg1Branch := io.ControlSignalsMEM
+    Reg1BranchControlSignal := io.ControlSignalsMEM
   } .elsewhen ((io.InstructionSignal.registerRs1 === io.WBRegAddressWB) && (io.ControlSignalsWB.regWrite) && (io.WBRegAddressWB =/= 0.U)) {
     Reg1BranchValue := io.RegDataWB
-    Reg1Branch := io.ControlSignalsWB
+    Reg1BranchControlSignal := io.ControlSignalsWB
   } .otherwise {
     Reg1BranchValue := registers.io.readData1
-    Reg1Branch := decoder.controlSignals
+    Reg1BranchControlSignal := decoder.controlSignals
   }
 
   // forwarding register 2 values for fast branch handling
   when ((io.InstructionSignal.registerRs2 === io.WBRegAddressEX) && (io.ControlSignalsEX.regWrite) && (io.WBRegAddressEX =/= 0.U)) {
     Reg2BranchValue := io.ALUOutEX
-    Reg2Branch := io.ControlSignalsEX
+    Reg2BranchControlSignal := io.ControlSignalsEX
   } .elsewhen ((io.InstructionSignal.registerRs2 === io.WBRegAddressMEM) && (io.ControlSignalsMEM.regWrite) && (io.WBRegAddressMEM =/= 0.U)) {
     Reg2BranchValue := io.ALUOutMEM
-    Reg2Branch := io.ControlSignalsMEM
+    Reg2BranchControlSignal := io.ControlSignalsMEM
   } .elsewhen ((io.InstructionSignal.registerRs2 === io.WBRegAddressWB) && (io.ControlSignalsWB.regWrite) && (io.WBRegAddressWB =/= 0.U)) {
     Reg2BranchValue := io.RegDataWB
-    Reg2Branch := io.ControlSignalsWB
+    Reg2BranchControlSignal := io.ControlSignalsWB
   } .otherwise {
     Reg2BranchValue := registers.io.readData2
-    Reg2Branch := decoder.controlSignals
+    Reg2BranchControlSignal := decoder.controlSignals
   }
 
   // constructing signal for deciding on fast branch handling
@@ -160,7 +162,7 @@ class InstructionDecode extends MultiIOModule {
   // since we then would need to stall, and we wouldnt save any cycles. We then instead handle this case in the EX stage together with the other branch instructions
   io.shouldBranchFast := (((decoder.branchType === branchType.beq) && (Reg1BranchValue === Reg2BranchValue)) || 
                       ((decoder.branchType === branchType.neq) && (Reg1BranchValue =/= Reg2BranchValue))) &&
-                      ((!Reg1Branch.memRead) && (!Reg2Branch.memRead))
+                      ((!Reg1BranchControlSignal.memRead) && (!Reg2BranchControlSignal.memRead))
 
   val Adder = Module(new Adder).io
 
@@ -168,5 +170,8 @@ class InstructionDecode extends MultiIOModule {
   Adder.in0 := io.PCIn.asSInt
   Adder.in1 := io.Immediate
   io.BranchAddressFast := Adder.out.asUInt
+
+  io.Reg1BranchCSMEMRead := Reg1BranchControlSignal.memRead
+  io.Reg2BranchCSMEMRead := Reg2BranchControlSignal.memRead
 
 }
